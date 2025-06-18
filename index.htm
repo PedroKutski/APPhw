@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Central de Qualidade - Menu</title>
+    
     <!-- Dependências Externas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -12,64 +13,138 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Estilos Embutidos -->
+    <!-- Estilos Embutidos e Aprimorados -->
     <style>
+        /* Definindo variáveis de cor para fácil manutenção */
         :root {
             --blue-500: #3b82f6; --amber-500: #f59e0b;
             --purple-600: #9333ea; --green-500: #22c55e;
-            --blue-700: #1d4ed8; --amber-700: #b45309;
-            --purple-700: #7e22ce; --green-700: #15803d;
         }
-        html { scroll-behavior: smooth; }
+
+        html { 
+            scroll-behavior: smooth; 
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f1f5f9;
-            /* Padrão de fundo sutil para um visual mais sofisticado */
-            background-image: radial-gradient(circle at 1px 1px, #d1d5db 1px, transparent 0);
-            background-size: 20px 20px;
+            background-color: #f0f4f8; /* Tom de cinza-azulado mais suave */
+            /* Novo padrão de fundo mais sutil e moderno */
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05)),
+                radial-gradient(circle at 25px 25px, #dbeafe 2px, transparent 0);
+            background-size: 50px 50px;
+            background-attachment: fixed; /* Fundo fixo ao rolar a página */
         }
+        
+        /* --- Animações de Entrada --- */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Aplica a animação no corpo para uma transição inicial suave */
+        body {
+            animation: fadeIn 0.8s ease-in-out forwards;
+        }
+
+        /* Classe para animar os elementos principais */
+        .animated-item {
+            opacity: 0; 
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        
+        /* --- Estilo do Modal --- */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(30, 41, 59, 0.6);
+            display: none; justify-content: center; align-items: center;
+            z-index: 1000; opacity: 0; visibility: hidden;
+            transition: opacity 0.35s ease, visibility 0.35s ease;
+        }
+        .modal.visible { 
+            display: flex; opacity: 1; visibility: visible; 
+        }
+        .modal-content {
+            transform: translateY(30px) scale(0.95); opacity: 0;
+            transition: transform 0.35s ease, opacity 0.35s ease;
+        }
+        .modal.visible .modal-content { 
+            transform: translateY(0) scale(1); opacity: 1;
+        }
+
+        /* --- NOVA ANIMAÇÃO PARA O ÍCONE DO ROBÔ --- */
+        @keyframes robotGlow {
+            0%, 100% {
+                transform: scale(1);
+                /* Sombra de texto para simular brilho */
+                text-shadow: 0 0 8px rgba(59, 130, 246, 0.5), 0 0 16px rgba(59, 130, 246, 0.3);
+            }
+            50% {
+                transform: scale(1.05);
+                text-shadow: 0 0 16px rgba(59, 130, 246, 0.7), 0 0 24px rgba(59, 130, 246, 0.5), 0 0 32px rgba(59, 130, 246, 0.3);
+            }
+        }
+        .robot-icon-style {
+            /* Aplicando a nova animação de brilho */
+            animation: robotGlow 2.5s ease-in-out infinite;
+        }
+
+        /* --- Estilos dos Cards --- */
         .menu-card {
             --card-color: #64748b; /* Cor padrão */
-            transition: all 0.3s ease-in-out;
+            transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border-top: 4px solid transparent;
         }
-        .menu-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
-            border-top: 4px solid var(--card-color);
-        }
-        /* Definindo cores para a borda no hover */
-        .menu-card.painel:hover { --card-color: var(--blue-500); }
-        .menu-card.registro:hover { --card-color: var(--amber-500); }
-        .menu-card.producao:hover { --card-color: var(--purple-600); }
-        .menu-card.ajuda:hover { --card-color: var(--green-500); }
 
-        .modal { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(30, 41, 59, 0.6); 
-            display: none; justify-content: center; align-items: center; 
-            z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.35s ease; 
+        .menu-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 30px -10px var(--shadow-color, rgba(0,0,0,0.15));
+            border-top-color: var(--card-color);
         }
-        .modal.visible { display: flex; opacity: 1; visibility: visible; }
-        .modal-content { 
-            background: #fff; padding: 35px; border-radius: 18px; 
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); 
-            width: 90%; max-width: 650px; 
-            transform: translateY(30px) scale(0.95); opacity: 0; 
-            transition: transform 0.35s ease, opacity 0.35s ease; 
+
+        .menu-card.painel { --card-color: var(--blue-500); --shadow-color: rgba(59, 130, 246, 0.2); }
+        .menu-card.registro { --card-color: var(--amber-500); --shadow-color: rgba(245, 158, 11, 0.2); }
+        .menu-card.producao { --card-color: var(--purple-600); --shadow-color: rgba(147, 51, 234, 0.2); }
+
+        .card-arrow {
+            transition: transform 0.3s ease;
         }
-        .modal.visible .modal-content { transform: translateY(0) scale(1); opacity: 1; }
-        #helpModal h3 { font-size: 1.25rem; font-weight: 600; color: #1e3a8a; margin-top: 1rem; margin-bottom: 0.5rem; }
-        #helpModal ul { list-style-type: disc; padding-left: 20px; margin-bottom: 1rem; color: #4b5563;}
+        .menu-card:hover .card-arrow {
+            transform: translateX(4px);
+        }
+
+        .help-banner {
+            transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+            background-color: #e0f2fe;
+        }
+        .help-banner:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px -5px rgba(14, 165, 233, 0.2);
+            background-color: #bae6fd;
+        }
+
     </style>
 </head>
 <body class="text-slate-800 flex flex-col min-h-screen">
 
     <!-- CABEÇALHO FIXO -->
-    <header class="bg-white/80 backdrop-blur-sm shadow-sm w-full z-20 flex-shrink-0 sticky top-0">
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm w-full z-20 flex-shrink-0 sticky top-0 animated-item">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                 <i class="fas fa-cubes text-3xl text-blue-600"></i>
-                 <h1 class="text-xl md:text-2xl font-bold text-slate-800 font-poppins">Central de Qualidade</h1>
+            <!-- Título clicável para abrir créditos -->
+            <div id="open-credits-trigger" class="flex items-center gap-3 cursor-pointer group">
+                <i class="fas fa-cubes-stacked text-3xl text-blue-600 group-hover:animate-pulse"></i>
+                <h1 class="text-xl md:text-2xl font-bold text-slate-800 font-poppins">Central de Qualidade</h1>
             </div>
         </div>
     </header>
@@ -77,106 +152,95 @@
     <!-- ÁREA DE CONTEÚDO PRINCIPAL -->
     <main class="flex-grow flex flex-col items-center justify-center p-4">
         <!-- CONTAINER DO MENU -->
-        <div id="menu-container" class="max-w-4xl w-full text-center p-4 sm:p-8">
+        <div class="max-w-5xl w-full text-center p-4 sm:p-8">
             <div class="mb-12">
-                <h2 class="text-4xl md:text-5xl font-bold text-slate-900 font-poppins">Bem-vindo!</h2>
-                <p class="mt-3 text-lg text-slate-600">Selecione uma das ferramentas para começar.</p>
+                <h2 class="text-4xl md:text-5xl font-bold text-slate-900 font-poppins animated-item" style="animation-delay: 0.2s;">Bem-vindo(a)!</h2>
+                <p class="mt-3 text-lg text-slate-600 animated-item" style="animation-delay: 0.35s;">Selecione uma das ferramentas de ação para começar.</p>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <a href="https://pedrokutski.github.io/APPhw/painel.html" target="_blank" rel="noopener noreferrer" class="menu-card painel bg-white p-8 rounded-2xl shadow-lg flex flex-col text-left">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+                <!-- Card 1: Painel -->
+                <a href="https://pedrokutski.github.io/APPhw/painel.html" target="_blank" rel="noopener noreferrer" class="menu-card painel bg-white p-8 rounded-2xl shadow-lg flex flex-col text-left animated-item" style="animation-delay: 0.5s;">
                     <div class="flex-shrink-0"><i class="fas fa-chart-pie text-4xl text-blue-500 mb-4"></i></div>
                     <div class="flex-grow">
                         <h3 class="text-2xl font-semibold mb-2 text-slate-900 font-poppins">Painel de Análise</h3>
-                        <p class="text-slate-600">Visualize gráficos e métricas detalhadas sobre os testes de qualidade.</p>
+                        <p class="text-slate-600">Visualize gráficos e métricas detalhadas sobre os testes.</p>
                     </div>
-                    <div class="mt-6"><span class="font-semibold text-blue-600 group-hover:text-blue-700 transition-colors">Acessar Painel <i class="fas fa-arrow-right ml-1"></i></span></div>
+                    <div class="mt-6"><span class="font-semibold text-blue-600 transition-colors">Acessar Painel <i class="fas fa-arrow-right ml-1 card-arrow"></i></span></div>
                 </a>
-                <a href="https://pedrokutski.github.io/APPhw/registro.html" target="_blank" rel="noopener noreferrer" class="menu-card registro bg-white p-8 rounded-2xl shadow-lg flex flex-col text-left">
+                
+                <!-- Card 2: Registro -->
+                <a href="https://pedrokutski.github.io/APPhw/registro.html" target="_blank" rel="noopener noreferrer" class="menu-card registro bg-white p-8 rounded-2xl shadow-lg flex flex-col text-left animated-item" style="animation-delay: 0.6s;">
                     <div class="flex-shrink-0"><i class="fas fa-clipboard-list text-4xl text-amber-500 mb-4"></i></div>
                     <div class="flex-grow">
-                        <h3 class="text-2xl font-semibold mb-2 text-slate-900 font-poppins">Registrar Novo Teste</h3>
-                        <p class="text-slate-600">Preencha o formulário para registrar um novo resultado de teste.</p>
+                        <h3 class="text-2xl font-semibold mb-2 text-slate-900 font-poppins">Registrar Teste</h3>
+                        <p class="text-slate-600">Preencha o formulário para registrar um novo resultado.</p>
                     </div>
-                    <div class="mt-6"><span class="font-semibold text-amber-600 group-hover:text-amber-700 transition-colors">Iniciar Registro <i class="fas fa-arrow-right ml-1"></i></span></div>
+                    <div class="mt-6"><span class="font-semibold text-amber-600 transition-colors">Iniciar Registro <i class="fas fa-arrow-right ml-1 card-arrow"></i></span></div>
                 </a>
-                <a href="https://pedrokutski.github.io/APPhw/prod.html" target="_blank" rel="noopener noreferrer" class="menu-card producao bg-white p-8 rounded-2xl shadow-lg flex flex-col text-left">
+
+                <!-- Card 3: Produção -->
+                <a href="https://pedrokutski.github.io/APPhw/prod.html" target="_blank" rel="noopener noreferrer" class="menu-card producao bg-white p-8 rounded-2xl shadow-lg flex flex-col text-left animated-item" style="animation-delay: 0.7s;">
                     <div class="flex-shrink-0"><i class="fas fa-industry text-4xl text-purple-600 mb-4"></i></div>
                     <div class="flex-grow">
                         <h3 class="text-2xl font-semibold mb-2 text-slate-900 font-poppins">Área de Produção</h3>
-                        <p class="text-slate-600">Gerencie e visualize informações sobre a fabricação de dispositivos.</p>
+                        <p class="text-slate-600">Gerencie informações sobre a fabricação de dispositivos.</p>
                     </div>
-                    <div class="mt-6"><span class="font-semibold text-purple-600 group-hover:text-purple-700 transition-colors">Acessar Produção <i class="fas fa-arrow-right ml-1"></i></span></div>
+                    <div class="mt-6"><span class="font-semibold text-purple-600 transition-colors">Acessar Produção <i class="fas fa-arrow-right ml-1 card-arrow"></i></span></div>
                 </a>
-                <div id="open-help" class="menu-card ajuda cursor-pointer bg-white p-8 rounded-2xl shadow-lg flex flex-col text-left">
-                    <div class="flex-shrink-0"><i class="fas fa-question-circle text-4xl text-green-500 mb-4"></i></div>
-                    <div class="flex-grow">
-                        <h3 class="text-2xl font-semibold mb-2 text-slate-900 font-poppins">Dúvidas e Informações</h3>
-                        <p class="text-slate-600">Clique aqui para ver um guia rápido de como utilizar as ferramentas.</p>
-                    </div>
-                    <div class="mt-6"><span class="font-semibold text-green-600 group-hover:text-green-700 transition-colors">Ver Guia <i class="fas fa-arrow-right ml-1"></i></span></div>
-                </div>
             </div>
-        </div>
 
-        <!-- MODAL DE AJUDA -->
-        <div id="helpModal" class="modal">
-            <div class="modal-content overflow-y-auto max-h-[80vh]">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-2xl font-bold text-slate-800 font-poppins"><i class="fas fa-question-circle text-green-500 mr-3"></i>Guia Rápido</h2>
-                    <button id="closeHelpBtn" class="text-3xl text-slate-400 hover:text-slate-600 transition-colors">&times;</button>
+            <!-- Banner de Ajuda e Informações -->
+            <a href="https://pedrokutski.github.io/APPhw/ajuda.html" target="_blank" rel="noopener noreferrer" class="help-banner animated-item w-full p-6 rounded-2xl flex flex-col sm:flex-row items-center text-left gap-6" style="animation-delay: 0.9s;">
+                <div class="flex-shrink-0"><i class="fas fa-question-circle text-5xl text-sky-500"></i></div>
+                <div class="flex-grow">
+                    <h3 class="text-xl font-bold text-sky-800 font-poppins">Precisa de Ajuda?</h3>
+                    <p class="text-sky-700 mt-1">Acesse nosso guia rápido para entender como utilizar cada ferramenta.</p>
                 </div>
-                <div>
-                    <h3><i class="fas fa-chart-pie text-blue-500 mr-2"></i>Como usar o Painel de Análise</h3>
-                    <ul>
-                        <li><strong>Filtros:</strong> Use os menus de "Modelo", "Cliente" e o seletor de "Período" para refinar os dados exibidos.</li>
-                        <li><strong>Navegação por Abas:</strong> Alterne entre as abas para diferentes visualizações dos dados.</li>
-                        <li><strong>Gráficos Interativos:</strong> Clique nas barras ou seções dos gráficos para ver detalhes específicos.</li>
-                        <li><strong>Atualizar Dados:</strong> O botão <i class="fas fa-sync-alt"></i> busca os dados mais recentes.</li>
-                    </ul>
-
-                    <h3><i class="fas fa-clipboard-list text-amber-500 mr-2"></i>Como usar o Registro de Testes</h3>
-                    <ul>
-                        <li><strong>Identificação:</strong> Seu nome e cor são salvos para agilizar registros futuros. Use o botão "Sair" para trocar de usuário.</li>
-                        <li><strong>Seleção Inicial:</strong> Comece selecionando o "Modelo do Dispositivo" e preenchendo o "Nome do Cliente".</li>
-                        <li><strong>Status dos Componentes:</strong> Clique em cada componente para mudar seu status: N/A (Cinza) &rarr; OK (Verde) &rarr; FALHA (Vermelho).</li>
-                        <li><strong>Envio:</strong> Após marcar todos os componentes, o botão "Enviar Teste" ficará disponível.</li>
-                    </ul>
-                </div>
-                <div class="mt-6 text-right">
-                     <button id="closeHelpBtn2" class="bg-slate-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-slate-700 transition-all">Entendido</button>
-                </div>
-            </div>
+                <div class="flex-shrink-0 mt-4 sm:mt-0"><span class="font-semibold text-sky-600 bg-white py-2 px-4 rounded-lg shadow-sm">Ver Guia <i class="fas fa-arrow-right ml-1"></i></span></div>
+            </a>
         </div>
     </main>
-
+    
+    <!-- MODAL DE CRÉDITOS -->
+    <div id="creditsModal" class="modal">
+        <div class="modal-content bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
+            <div class="mb-6">
+                <!-- ÍCONE MODIFICADO com o novo estilo de animação -->
+                <i class="fas fa-robot text-6xl text-blue-500 robot-icon-style"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-slate-800 font-poppins mb-2">Desenvolvido por</h3>
+            <p class="text-xl text-slate-600">Pedro Kutski</p>
+            <p class="text-sm text-slate-400 mt-6">&copy; 2025</p>
+            <button id="closeCreditsBtn" class="mt-8 bg-slate-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-slate-700 transition-all w-full">
+                Fechar
+            </button>
+        </div>
+    </div>
+    
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const helpModal = document.getElementById('helpModal');
-            
-            // Função única para controlar a visibilidade do modal
-            const toggleModal = (show) => {
-                helpModal.classList.toggle('visible', show);
+            // --- Lógica do Modal de Créditos ---
+            const creditsModal = document.getElementById('creditsModal');
+            const openTrigger = document.getElementById('open-credits-trigger');
+            const closeBtn = document.getElementById('closeCreditsBtn');
+
+            const toggleCreditsModal = (show) => {
+                creditsModal.classList.toggle('visible', show);
             };
 
-            // Adiciona evento para abrir o modal
-            document.getElementById('open-help').addEventListener('click', () => toggleModal(true));
-
-            // Adiciona evento para fechar em todos os botões de fechar
-            document.querySelectorAll('#closeHelpBtn, #closeHelpBtn2').forEach(button => {
-                button.addEventListener('click', () => toggleModal(false));
-            });
+            openTrigger.addEventListener('click', () => toggleCreditsModal(true));
+            closeBtn.addEventListener('click', () => toggleCreditsModal(false));
             
-            // Adiciona evento para fechar ao clicar fora do conteúdo
-            helpModal.addEventListener('click', (event) => {
-                if (event.target === helpModal) {
-                    toggleModal(false);
+            creditsModal.addEventListener('click', (event) => {
+                if (event.target === creditsModal) {
+                    toggleCreditsModal(false);
                 }
             });
 
-            // Adiciona evento para fechar com a tecla 'Escape'
             document.addEventListener('keydown', (event) => {
-                if (event.key === 'Escape' && helpModal.classList.contains('visible')) {
-                    toggleModal(false);
+                if (event.key === 'Escape' && creditsModal.classList.contains('visible')) {
+                    toggleCreditsModal(false);
                 }
             });
         });
