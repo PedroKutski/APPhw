@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Área de Produção - Central de Qualidade</title>
+    <!-- Dependências Externas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Estilos Embutidos -->
+    <style>
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+        }
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+
+        .prod-card {
+            transition: all 0.3s ease-in-out;
+            background-color: #fff;
+        }
+        .prod-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+        }
+        
+        .modal { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(30, 41, 59, 0.6); 
+            display: none; justify-content: center; align-items: center; 
+            z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.35s ease; 
+        }
+        .modal.visible { display: flex; opacity: 1; visibility: visible; }
+        .modal-content { 
+            background: #fff; padding: 35px; border-radius: 18px; 
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); 
+            width: 90%; max-width: 600px; 
+            transform: translateY(30px) scale(0.95); opacity: 0; 
+            transition: transform 0.35s ease, opacity 0.35s ease; 
+        }
+        .modal.visible .modal-content { transform: translateY(0) scale(1); opacity: 1; }
+        
+        .rj45-container { display: flex; justify-content: center; gap: 2px; margin-top: 20px; height: 150px; align-items: flex-end; }
+        .rj45-wire { width: 10px; background-color: gray; height: 100%; border-radius: 2px; box-shadow: inset 0 0 3px rgba(0,0,0,0.3); }
+        .wire-white-green { background-color: #A0D8B0; } .wire-green { background-color: #2ECC71; }
+        .wire-white-orange { background-color: #F8C471; } .wire-blue { background-color: #3498DB; }
+        .wire-white-blue { background-color: #ADD8E6; } .wire-orange { background-color: #E67E22; }
+        .wire-white-brown { background-color: #D3A79E; } .wire-brown { background-color: #8B4513; }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- CABEÇALHO FIXO -->
+    <header class="bg-white/80 backdrop-blur-sm shadow-sm w-full z-20 flex-shrink-0 sticky top-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-industry text-3xl text-purple-600"></i>
+                <h1 class="text-xl md:text-2xl font-bold text-slate-800 font-poppins">Área de Produção</h1>
+            </div>
+            <a href="index.html" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center gap-2">
+                <i class="fas fa-arrow-left"></i>
+                <span>Voltar ao Menu</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- CONTAINER DA ÁREA DE PRODUÇÃO -->
+    <main id="producao-container" class="flex-grow flex items-start justify-center p-4 sm:p-6 lg:p-8">
+        <div class="w-full max-w-5xl">
+            <!-- Navegação Breadcrumb -->
+            <nav id="breadcrumb-nav" class="mb-6 flex items-center gap-2 text-sm text-slate-500"></nav>
+            
+            <!-- Conteúdo dinâmico (Categorias/Subcategorias) -->
+            <div id="producao-content" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Cards de categoria serão injetados aqui -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de Detalhes da Produção -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content overflow-y-auto max-h-[85vh]">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="detailModalTitle" class="text-2xl font-bold text-slate-800 font-poppins"></h2>
+                <button id="closeDetailModalBtn" class="text-3xl text-slate-400 hover:text-slate-600 transition-colors">&times;</button>
+            </div>
+            <div id="detailModalContent" class="text-slate-600 prose max-w-none"></div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- ESTRUTURA DE DADOS ---
+        const producaoData = [
+            { id: 'sonda', label: 'Fabricação de Sonda', icon: 'fas fa-thermometer-half', details: { text: 'Informações sobre o processo de fabricação de sondas, incluindo materiais, montagem e padrões de qualidade.', rj45_wires: true } },
+            { id: 'termostatos', label: 'Fabricação de Termostatos', icon: 'fas fa-temperature-low', subcategories: [ 
+                { id: 'hf801_prod', label: 'HF801', icon: 'fas fa-microchip', details: { text: 'Guia de fabricação do HF801, com ênfase no *como* e *porquê* de cada etapa.' } },
+                { id: 'hf810_prod', label: 'HF810', icon: 'fas fa-microchip', details: { text: 'Processos para produção do HF810, garantindo precisão e durabilidade.' } },
+                { id: 'hf900_prod', label: 'HF900', icon: 'fas fa-microchip', details: { text: 'Guia do HF900, com foco em calibração e testes de performance.' } },
+                { id: 'hf918_prod', label: 'HF918', icon: 'fas fa-microchip', details: { text: 'Linha de produção do HF918, incluindo montagem de circuitos e integração.' } }
+            ]},
+            { id: 'iluminacao', label: 'Fabricação de Iluminação', icon: 'fas fa-lightbulb', subcategories: [
+                { id: 'sc101_prod', label: 'SC101', icon: 'fas fa-lightbulb', details: { text: 'Instruções de montagem e controle de qualidade para o SC101.' } },
+                { id: 'sc104_prod', label: 'SC104', icon: 'fas fa-lightbulb', details: { text: 'Detalhes da fabricação do SC104, com ênfase na durabilidade.' } },
+                { id: 'sc106_prod', label: 'SC106', icon: 'fas fa-lightbulb', details: { text: 'Passos para a produção do SC106, assegurando a correta instalação dos LEDs.' } },
+                { id: 'sc109_prod', label: 'SC109', icon: 'fas fa-lightbulb', details: { text: 'Guia do SC109, com foco no design e funcionalidade inteligente.' } },
+                { id: 'modulos_iluminacao', label: 'Módulos de Iluminação', icon: 'fas fa-boxes', subcategories: [ 
+                    { id: 'sl201', label: 'SL201', icon: 'fas fa-cube', details: { text: 'Detalhes de fabricação para o módulo SL201.' } },
+                    { id: 'sd211', label: 'SD211', icon: 'fas fa-cube', details: { text: 'Instruções de produção do módulo SD211.' } },
+                    { id: 'sd221', label: 'SD221', icon: 'fas fa-cube', details: { text: 'Guia para a fabricação do SD221.' } },
+                    { id: 'st401', label: 'ST401', icon: 'fas fa-cube', details: { text: 'Processos para a produção do módulo ST401.' } }
+                ]}
+            ]},
+            { id: 'filtro_contatora', label: 'Filtro de Contatora', icon: 'fas fa-filter', details: { text: 'Informações sobre a fabricação e aplicação de filtros de contatora.' } }, 
+            { id: 'rele_ac', label: 'Relé AC', icon: 'fas fa-bolt', details: { text: 'Métodos de produção de relés AC, com foco em segurança e performance.' } }
+        ];
+
+        // --- ESTADO DA NAVEGAÇÃO ---
+        let navigationStack = [producaoData];
+
+        // --- SELEÇÃO DE ELEMENTOS DO DOM ---
+        const contentDiv = document.getElementById('producao-content');
+        const breadcrumbNav = document.getElementById('breadcrumb-nav');
+        const detailModal = document.getElementById('detailModal');
+        const detailModalTitle = document.getElementById('detailModalTitle');
+        const detailModalContent = document.getElementById('detailModalContent');
+        const closeDetailModalBtn = document.getElementById('closeDetailModalBtn');
+        
+        // --- FUNÇÕES ---
+
+        /**
+         * Renderiza os cards de categoria ou subcategoria.
+         */
+        function renderContent() {
+            const currentLevel = navigationStack[navigationStack.length - 1];
+            contentDiv.innerHTML = ''; // Limpa o conteúdo anterior
+
+            currentLevel.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'prod-card p-6 rounded-2xl shadow-md cursor-pointer flex flex-col items-start gap-4';
+                card.innerHTML = `
+                    <i class="${item.icon} text-4xl text-purple-600"></i>
+                    <h3 class="text-xl font-bold text-slate-800 font-poppins">${item.label}</h3>
+                    <p class="text-slate-500 text-sm">${item.subcategories ? `${item.subcategories.length} sub-itens` : 'Ver detalhes'}</p>
+                `;
+                card.addEventListener('click', () => handleItemClick(item));
+                contentDiv.appendChild(card);
+            });
+            renderBreadcrumb();
+        }
+
+        /**
+         * Renderiza a navegação breadcrumb.
+         */
+        function renderBreadcrumb() {
+            breadcrumbNav.innerHTML = '';
+            navigationStack.forEach((level, index) => {
+                const isLast = index === navigationStack.length - 1;
+                let label = 'Início';
+                if (index > 0) {
+                    // Encontra o item pai que levou a este nível
+                    const parentLevel = navigationStack[index - 1];
+                    const parentItem = parentLevel.find(item => item.subcategories === level);
+                    if (parentItem) {
+                        label = parentItem.label;
+                    }
+                }
+
+                if (isLast) {
+                    const span = document.createElement('span');
+                    span.className = 'font-semibold text-slate-700';
+                    span.textContent = label;
+                    breadcrumbNav.appendChild(span);
+                } else {
+                    const link = document.createElement('button');
+                    link.className = 'hover:text-blue-600 transition-colors';
+                    link.textContent = label;
+                    link.onclick = () => {
+                        navigationStack = navigationStack.slice(0, index + 1);
+                        renderContent();
+                    };
+                    breadcrumbNav.appendChild(link);
+                    
+                    const separator = document.createElement('i');
+                    separator.className = 'fas fa-chevron-right text-xs text-slate-400';
+                    breadcrumbNav.appendChild(separator);
+                }
+            });
+        }
+        
+        /**
+         * Lida com o clique em um item (card).
+         * @param {object} item - O item clicado.
+         */
+        function handleItemClick(item) {
+            if (item.subcategories) {
+                navigationStack.push(item.subcategories);
+                renderContent();
+            } else if (item.details) {
+                showDetailModal(item);
+            }
+        }
+        
+        /**
+         * Mostra o modal com os detalhes do item.
+         * @param {object} item - O item a ser exibido no modal.
+         */
+        function showDetailModal(item) {
+            detailModalTitle.textContent = item.label;
+            let contentHTML = `<p>${item.details.text.replace(/\*(.*?)\*/g, '<strong>$1</strong>')}</p>`;
+            
+            if (item.details.rj45_wires) {
+                contentHTML += `
+                    <div class="rj45-container">
+                        <div class="rj45-wire wire-white-green"></div><div class="rj45-wire wire-green"></div>
+                        <div class="rj45-wire wire-white-orange"></div><div class="rj45-wire wire-blue"></div>
+                        <div class="rj45-wire wire-white-blue"></div><div class="rj45-wire wire-orange"></div>
+                        <div class="rj45-wire wire-white-brown"></div><div class="rj45-wire wire-brown"></div>
+                    </div>
+                    <p class="text-center text-slate-500 mt-2 text-sm">Cores do padrão T568B para cabeamento RJ45.</p>`;
+            }
+            detailModalContent.innerHTML = contentHTML;
+            detailModal.classList.add('visible');
+        }
+
+        // --- INICIALIZAÇÃO E EVENT LISTENERS ---
+        closeDetailModalBtn.addEventListener('click', () => detailModal.classList.remove('visible'));
+        detailModal.addEventListener('click', (event) => {
+            if (event.target === detailModal) {
+                detailModal.classList.remove('visible');
+            }
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && detailModal.classList.contains('visible')) {
+                detailModal.classList.remove('visible');
+            }
+        });
+
+        // Ponto de entrada
+        renderContent();
+    });
+    </script>
+</body>
+</html>

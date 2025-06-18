@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central de Qualidade - Menu</title>
+    <!-- Dependências Externas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Estilos Embutidos -->
+    <style>
+        :root {
+            --blue-500: #3b82f6; --amber-500: #f59e0b;
+            --purple-600: #9333ea; --green-500: #22c55e;
+            --blue-700: #1d4ed8; --amber-700: #b45309;
+            --purple-700: #7e22ce; --green-700: #15803d;
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+            /* Padrão de fundo sutil para um visual mais sofisticado */
+            background-image: radial-gradient(circle at 1px 1px, #d1d5db 1px, transparent 0);
+            background-size: 20px 20px;
+        }
+        .menu-card {
+            --card-color: #64748b; /* Cor padrão */
+            transition: all 0.3s ease-in-out;
+        }
+        .menu-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+            border-top: 4px solid var(--card-color);
+        }
+        /* Definindo cores para a borda no hover */
+        .menu-card.painel:hover { --card-color: var(--blue-500); }
+        .menu-card.registro:hover { --card-color: var(--amber-500); }
+        .menu-card.producao:hover { --card-color: var(--purple-600); }
+        .menu-card.ajuda:hover { --card-color: var(--green-500); }
+
+        .modal { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(30, 41, 59, 0.6); 
+            display: none; justify-content: center; align-items: center; 
+            z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.35s ease; 
+        }
+        .modal.visible { display: flex; opacity: 1; visibility: visible; }
+        .modal-content { 
+            background: #fff; padding: 35px; border-radius: 18px; 
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); 
+            width: 90%; max-width: 650px; 
+            transform: translateY(30px) scale(0.95); opacity: 0; 
+            transition: transform 0.35s ease, opacity 0.35s ease; 
+        }
+        .modal.visible .modal-content { transform: translateY(0) scale(1); opacity: 1; }
+        #helpModal h3 { font-size: 1.25rem; font-weight: 600; color: #1e3a8a; margin-top: 1rem; margin-bottom: 0.5rem; }
+        #helpModal ul { list-style-type: disc; padding-left: 20px; margin-bottom: 1rem; color: #4b5563;}
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col min-h-screen">
+
+    <!-- CABEÇALHO FIXO -->
+    <header class="bg-white/80 backdrop-blur-sm shadow-sm w-full z-20 flex-shrink-0 sticky top-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                 <i class="fas fa-cubes text-3xl text-blue-600"></i>
+                 <h1 class="text-xl md:text-2xl font-bold text-slate-800 font-poppins">Central de Qualidade</h1>
+            </div>
+        </div>
+    </header>
+
+    <!-- ÁREA DE CONTEÚDO PRINCIPAL -->
+    <main class="flex-grow flex flex-col items-center justify-center p-4">
+        <!-- CONTAINER DO MENU -->
+        <div id="menu-container" class="max-w-4xl w-full text-center p-4 sm:p-8">
+            <div class="mb-12">
+                <h2 class="text-4xl md:text-5xl font-bold text-slate-900 font-poppins">Bem-vindo!</h2>
+                <p class="mt-3 text-lg text-slate-600">Selecione uma das ferramentas para começar.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <a href="painel.html" class="menu-card painel bg-white p-8 rounded-2xl shadow-lg flex flex-col text-left">
+                    <div class="flex-shrink-0"><i class="fas fa-chart-pie text-4xl text-blue-500 mb-4"></i></div>
+                    <div class="flex-grow">
+                        <h3 class="text-2xl font-semibold mb-2 text-slate-900 font-poppins">Painel de Análise</h3>
+                        <p class="text-slate-600">Visualize gráficos e métricas detalhadas sobre os testes de qualidade.</p>
+                    </div>
+                    <div class="mt-6"><span class="font-semibold text-blue-600 group-hover:text-blue-700 transition-colors">Acessar Painel <i class="fas fa-arrow-right ml-1"></i></span></div>
+                </a>
+                <a href="registro.html" class="menu-card registro bg-white p-8 rounded-2xl shadow-lg flex flex-col text-left">
+                    <div class="flex-shrink-0"><i class="fas fa-clipboard-list text-4xl text-amber-500 mb-4"></i></div>
+                    <div class="flex-grow">
+                        <h3 class="text-2xl font-semibold mb-2 text-slate-900 font-poppins">Registrar Novo Teste</h3>
+                        <p class="text-slate-600">Preencha o formulário para registrar um novo resultado de teste.</p>
+                    </div>
+                    <div class="mt-6"><span class="font-semibold text-amber-600 group-hover:text-amber-700 transition-colors">Iniciar Registro <i class="fas fa-arrow-right ml-1"></i></span></div>
+                </a>
+                <a href="producao.html" class="menu-card producao bg-white p-8 rounded-2xl shadow-lg flex flex-col text-left">
+                    <div class="flex-shrink-0"><i class="fas fa-industry text-4xl text-purple-600 mb-4"></i></div>
+                    <div class="flex-grow">
+                        <h3 class="text-2xl font-semibold mb-2 text-slate-900 font-poppins">Área de Produção</h3>
+                        <p class="text-slate-600">Gerencie e visualize informações sobre a fabricação de dispositivos.</p>
+                    </div>
+                    <div class="mt-6"><span class="font-semibold text-purple-600 group-hover:text-purple-700 transition-colors">Acessar Produção <i class="fas fa-arrow-right ml-1"></i></span></div>
+                </a>
+                <div id="open-help" class="menu-card ajuda cursor-pointer bg-white p-8 rounded-2xl shadow-lg flex flex-col text-left">
+                    <div class="flex-shrink-0"><i class="fas fa-question-circle text-4xl text-green-500 mb-4"></i></div>
+                    <div class="flex-grow">
+                        <h3 class="text-2xl font-semibold mb-2 text-slate-900 font-poppins">Dúvidas e Informações</h3>
+                        <p class="text-slate-600">Clique aqui para ver um guia rápido de como utilizar as ferramentas.</p>
+                    </div>
+                    <div class="mt-6"><span class="font-semibold text-green-600 group-hover:text-green-700 transition-colors">Ver Guia <i class="fas fa-arrow-right ml-1"></i></span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL DE AJUDA -->
+        <div id="helpModal" class="modal">
+            <div class="modal-content overflow-y-auto max-h-[80vh]">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-slate-800 font-poppins"><i class="fas fa-question-circle text-green-500 mr-3"></i>Guia Rápido</h2>
+                    <button id="closeHelpBtn" class="text-3xl text-slate-400 hover:text-slate-600 transition-colors">&times;</button>
+                </div>
+                <div>
+                    <h3><i class="fas fa-chart-pie text-blue-500 mr-2"></i>Como usar o Painel de Análise</h3>
+                    <ul>
+                        <li><strong>Filtros:</strong> Use os menus de "Modelo", "Cliente" e o seletor de "Período" para refinar os dados exibidos.</li>
+                        <li><strong>Navegação por Abas:</strong> Alterne entre as abas para diferentes visualizações dos dados.</li>
+                        <li><strong>Gráficos Interativos:</strong> Clique nas barras ou seções dos gráficos para ver detalhes específicos.</li>
+                        <li><strong>Atualizar Dados:</strong> O botão <i class="fas fa-sync-alt"></i> busca os dados mais recentes.</li>
+                    </ul>
+
+                    <h3><i class="fas fa-clipboard-list text-amber-500 mr-2"></i>Como usar o Registro de Testes</h3>
+                    <ul>
+                        <li><strong>Identificação:</strong> Seu nome e cor são salvos para agilizar registros futuros. Use o botão "Sair" para trocar de usuário.</li>
+                        <li><strong>Seleção Inicial:</strong> Comece selecionando o "Modelo do Dispositivo" e preenchendo o "Nome do Cliente".</li>
+                        <li><strong>Status dos Componentes:</strong> Clique em cada componente para mudar seu status: N/A (Cinza) &rarr; OK (Verde) &rarr; FALHA (Vermelho).</li>
+                        <li><strong>Envio:</strong> Após marcar todos os componentes, o botão "Enviar Teste" ficará disponível.</li>
+                    </ul>
+                </div>
+                <div class="mt-6 text-right">
+                     <button id="closeHelpBtn2" class="bg-slate-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-slate-700 transition-all">Entendido</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const helpModal = document.getElementById('helpModal');
+            
+            // Função única para controlar a visibilidade do modal
+            const toggleModal = (show) => {
+                helpModal.classList.toggle('visible', show);
+            };
+
+            // Adiciona evento para abrir o modal
+            document.getElementById('open-help').addEventListener('click', () => toggleModal(true));
+
+            // Adiciona evento para fechar em todos os botões de fechar
+            document.querySelectorAll('#closeHelpBtn, #closeHelpBtn2').forEach(button => {
+                button.addEventListener('click', () => toggleModal(false));
+            });
+            
+            // Adiciona evento para fechar ao clicar fora do conteúdo
+            helpModal.addEventListener('click', (event) => {
+                if (event.target === helpModal) {
+                    toggleModal(false);
+                }
+            });
+
+            // Adiciona evento para fechar com a tecla 'Escape'
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && helpModal.classList.contains('visible')) {
+                    toggleModal(false);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

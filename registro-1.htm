@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Teste - Central de Qualidade</title>
+    <!-- Dependências Externas -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Estilos Embutidos -->
+    <style>
+        :root {
+            --primary-color: #3B82F6; --primary-dark: #2563EB;
+            --accent-color: #F59E0B; --card-background: #ffffff;
+            --text-color: #1F2937; --text-color-light: #4B5563;
+            --border-color: #D1D5DB; --focus-shadow-color: rgba(59, 130, 246, 0.25);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            --success-bg: #D1FAE5; --success-border: #10B981; --success-text: #047857;
+            --failure-bg: #FEE2E2; --failure-border: #EF4444; --failure-text: #B91C1C;
+            --na-bg: #F3F4F6; --na-border: #D1D5DB; --na-text: #4B5563;
+            --font-poppins: 'Poppins', sans-serif;
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+        }
+        
+        #mainLoginScreen {
+            display: flex; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            justify-content: center; align-items: center; z-index: 9999;
+            opacity: 1; transition: opacity 0.5s ease-out;
+        }
+        #mainLoginScreen.hidden-auth { opacity: 0; pointer-events: none; }
+        #mainLoginScreen .login-container {
+            background: #ffffff; padding: 40px; border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 100%; max-width: 420px;
+            text-align: center; color: #2c3e50;
+            transform: translateY(0); opacity: 1; animation: fadeInUpLogin 0.6s ease-out;
+        }
+        @keyframes fadeInUpLogin {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        #mainLoginScreen h1 { font-family: var(--font-poppins); margin-bottom: 25px; font-size: 2rem; color: #3498db; font-weight: 700; }
+        #mainLoginScreen h1 i { margin-right: 12px; color: #2980b9; }
+
+        #recall-container .app { 
+            background: var(--card-background); padding: 35px 40px; border-radius: 20px; 
+            box-shadow: var(--shadow-lg); width: 100%; max-width: 850px; 
+            display: flex; flex-direction: column; gap: 25px; position: relative; margin-bottom: auto; 
+        }
+        #recall-container h1 { text-align: center; font-size: 2rem; font-family: var(--font-poppins); color: var(--primary-dark); margin-bottom: 15px; font-weight: 700; }
+        #recall-container .component { 
+            padding: 15px 20px; border-radius: 12px; display: flex; flex-direction: column; align-items: stretch;
+            user-select: none; transition: all 0.3s ease; border: 1px solid transparent; 
+        }
+        #recall-container .component-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        #recall-container .component.unmarked-highlight { box-shadow: 0 0 0 3px var(--failure-border); transform: scale(1.01); }
+        #recall-container .component:hover { transform: translateY(-2px); box-shadow: 0 4px 8px -2px rgba(0,0,0,0.1); }
+        #recall-container .component .icon { font-size: 1.8rem; transition: transform 0.3s ease, color 0.3s ease; }
+        #recall-container .status-na { background-color: var(--na-bg); border-color: var(--na-border); color: var(--na-text); }
+        #recall-container .status-ok { background-color: var(--success-bg); border-color: var(--success-border); color: var(--success-text); }
+        #recall-container .status-falha { background-color: var(--failure-bg); border-color: var(--failure-border); color: var(--failure-text); }
+        
+        #recall-container .color-options { display: flex; justify-content: space-around; gap: 10px; }
+        #recall-container .color-option { flex-grow: 1; height: 40px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease-in-out; border: 3px solid transparent; display: flex; justify-content: center; align-items: center; background-clip: padding-box; }
+        #recall-container .color-option:hover { transform: scale(1.05); }
+        #recall-container .color-option.selected { border-color: var(--primary-color); }
+        #recall-container .color-option.selected i { opacity: 1; }
+        #recall-container .color-option i { font-size: 1.2rem; opacity: 0; transition: opacity 0.25s ease; color: var(--text-color); }
+        
+        .modal { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30, 41, 59, 0.6); 
+            display: none; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.35s ease; 
+        }
+        .modal.visible { display: flex; opacity: 1; visibility: visible; }
+        .modal-content { 
+            background: #fff; padding: 35px; border-radius: 18px; 
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); width: 90%; max-width: 550px; 
+            transform: translateY(30px) scale(0.95); opacity: 0; transition: transform 0.35s ease, opacity 0.35s ease; 
+        }
+        .modal.visible .modal-content { transform: translateY(0) scale(1); opacity: 1; }
+        .feedback-btn { 
+            position: fixed; background: #4B5563; color: white; border: none; border-radius: 50%; width: 60px; height: 60px; 
+            font-size: 1.6rem; cursor: pointer; box-shadow: var(--shadow-lg); display: flex; justify-content: center; align-items: center; 
+            transition: all 0.3s ease; z-index: 999; bottom: 30px; right: 30px; 
+        }
+        .feedback-btn:hover { transform: translateY(-5px) scale(1.1); box-shadow: 0 10px 20px rgba(0,0,0,0.2); background: #374151;}
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Tela de Login/Identificação (Inicialmente visível) -->
+    <div id="mainLoginScreen">
+        <div class="login-container">
+            <h1><i class="fas fa-user-check" style="margin-right: 10px;"></i>Identificação do Testador</h1>
+            <div class="field">
+                <label for="mainTesterName" class="font-semibold text-slate-700">Seu Nome:</label>
+                <input type="text" id="mainTesterName" placeholder="Digite seu nome" required autofocus class="mt-1 block w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+            </div>
+            <button type="button" id="mainLoginBtn" class="w-full mt-4 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                <i class="fas fa-sign-in-alt mr-2"></i>Entrar
+            </button>
+            <p id="loginErrorMessage" class="text-red-500 text-sm mt-4 h-4"></p>
+        </div>
+    </div>
+
+    <!-- Conteúdo da Aplicação (Inicialmente oculto) -->
+    <div id="app-content" class="hidden">
+        <header class="bg-white/80 backdrop-blur-sm shadow-sm w-full z-20 flex-shrink-0 sticky top-0">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-clipboard-list text-2xl text-amber-500"></i>
+                    <h1 class="text-xl md:text-2xl font-bold text-slate-800 font-poppins">Registrar Novo Teste</h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="index.html" class="text-slate-600 hover:text-blue-600 transition-colors" title="Voltar ao Menu">
+                        <i class="fas fa-home text-xl"></i>
+                    </a>
+                    <button id="logoutBtn" class="text-slate-600 hover:text-red-600 transition-colors" title="Sair / Trocar Usuário">
+                        <i class="fas fa-sign-out-alt text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main id="recall-container" class="flex-grow flex items-start justify-center p-4 sm:p-6 lg:p-8">
+            <div class="app">
+                <div id="testerNameDisplay" class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg flex items-center gap-2">
+                    <i class="fas fa-user-circle"></i> <span id="testerNameText"></span>
+                </div>
+                <h1 class="mt-4"><i class="fas fa-edit" style="margin-right:10px;"></i>Formulário de Teste</h1>
+                <form id="dataForm">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="field"><label for="modelo" class="font-semibold">Modelo do Dispositivo</label><select id="modelo" name="modelo" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"><option value="" disabled selected>Selecione o modelo</option><option value="HF801">HF801</option><option value="HF810">HF810</option><option value="HF900">HF900</option><option value="HF405">HF405</option><option value="HF918">HF918</option></select></div>
+                        <div class="field hidden" id="clienteField"><label for="cliente" class="font-semibold">Nome do Cliente</label><input type="text" id="cliente" name="cliente" placeholder="Ex: João Silva" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/></div>
+                    </div>
+                    <div class="field mt-4"><label class="font-semibold">Cor de Identificação</label><div class="color-options" id="colorOptionsContainer"></div></div>
+                    <fieldset class="hidden" id="componentesField"><legend class="font-semibold text-lg text-slate-700 mt-6 mb-4 border-b pb-2">Status dos Componentes</legend><div id="components" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></fieldset>
+                    <button type="submit" class="hidden w-full mt-8 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1" id="enviarBtn">
+                        <i class="fas fa-paper-plane" style="margin-right: 8px;"></i>Enviar Teste
+                    </button>
+                </form>
+                <div id="status" aria-live="polite" class="text-center mt-4"></div>
+            </div>
+            <button class="feedback-btn" id="feedbackBtn" title="Enviar Feedback"> <i class="fas fa-bullhorn"></i> </button>
+        </main>
+    </div>
+    
+    <!-- Modais -->
+    <div class="modal" id="confirmSendModal">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold font-poppins text-slate-800"><i class="fas fa-question-circle text-blue-500 mr-2"></i>Confirmar Envio?</h2>
+            <p class="text-slate-600">Revise os dados se necessário. Deseja prosseguir?</p>
+            <div class="field"><label for="observacao" class="font-semibold">Observação Geral (opcional)</label><textarea id="observacao" placeholder="Adicione qualquer observação relevante..." class="mt-1 block w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md"></textarea></div>
+            <div class="flex justify-end gap-4 mt-4"><button type="button" class="bg-slate-200 px-4 py-2 rounded-lg" id="cancelSend">Cancelar</button><button type="button" class="bg-blue-600 text-white px-4 py-2 rounded-lg" id="confirmSend">Confirmar</button></div>
+        </div>
+    </div>
+    <div class="modal" id="feedbackModal">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold font-poppins text-slate-800"><i class="fas fa-bullhorn text-amber-500 mr-2"></i>Enviar Feedback</h2>
+            <p class="text-slate-600">Compartilhe suas sugestões, bugs ou melhorias.</p>
+            <div class="field mt-4"><label for="feedbackType" class="font-semibold">Tipo</label><select id="feedbackType" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md"><option value="bug">Bug / Erro</option><option value="melhoria">Sugestão de Melhoria</option><option value="outros">Outros</option></select></div>
+            <div class="field mt-2"><label for="feedbackDescription" class="font-semibold">Descrição</label><textarea id="feedbackDescription" placeholder="Descreva em detalhes..." class="mt-1 block w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md"></textarea></div>
+            <div id="feedbackStatus" aria-live="polite"></div>
+            <div class="flex justify-end gap-4 mt-4"><button type="button" class="bg-slate-200 px-4 py-2 rounded-lg" id="cancelFeedback">Cancelar</button><button type="button" class="bg-amber-500 text-white px-4 py-2 rounded-lg" id="submitFeedbackBtn">Enviar</button></div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- ESTADO E CONFIGURAÇÃO ---
+        let globalTesterName = '', globalTesterColor = '';
+        let recallAppInitialized = false;
+
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyE4h4LL3vk8n0m2A0C3p3n6Plz9w9YV0Ip_N8CpBpIk9VRKQmSkIWmzDL05XgdVKmlmw/exec';
+        const componentesConfig = [ 
+            { id: 'aht10', label: 'AHT10' }, { id: 'botao_esquerdo', label: 'Botão Esquerdo' }, { id: 'botao_central', label: 'Botão Central' }, 
+            { id: 'botao_direito', label: 'Botão Direito' }, { id: 'botao_reset', label: 'Botão Reset' }, { id: 'certificado', label: 'Certificado' }, 
+            { id: 'conector_mola', label: 'Conector Mola' }, { id: 'esp32', label: 'ESP32' }, { id: 'display', label: 'Display' }, { id: 'led_azul', label: 'LED Azul' }, 
+            { id: 'ledrgb', label: 'LED RGB' }, { id: 'ldr', label: 'LDR' }, { id: 'ntc', label: 'NTC' }, { id: 'relay', label: 'Relay' }, { id: 'tm1637', label: 'TM1637' }, 
+            { id: 'watchdog', label: 'Watchdog' }, { id: 'serigrafia', label: 'Serigrafia' } 
+        ];
+        const STATUS_NA = 'N/A', STATUS_OK = 'OK', STATUS_FALHA = 'FALHA';
+        const statusCycle = [STATUS_NA, STATUS_OK, STATUS_FALHA];
+        const statusInfo = {
+            [STATUS_NA]: { icon: 'fas fa-minus-circle', class: 'status-na' },
+            [STATUS_OK]: { icon: 'fas fa-check-circle', class: 'status-ok' },
+            [STATUS_FALHA]: { icon: 'fas fa-times-circle', class: 'status-falha' }
+        };
+        const hideMap = { 'HF801': ['aht10', 'botao_central'], 'HF810': ['aht10', 'botao_central'], 'HF900': ['aht10', 'botao_central'], 'HF405': ['aht10', 'ntc', 'botao_central'], 'HF918': ['ntc'] };
+        const paletteColors = ['#A5D8FF', '#A7F3D0', '#FDE68A'];
+        let estadoComponentes = {}, componentesParaExibir = [];
+
+        // --- SELEÇÃO DE ELEMENTOS DOM ---
+        const mainLoginScreen = document.getElementById('mainLoginScreen'), mainTesterNameInput = document.getElementById('mainTesterName'), mainLoginBtn = document.getElementById('mainLoginBtn'), loginErrorMessage = document.getElementById('loginErrorMessage');
+        const appContent = document.getElementById('app-content'), logoutBtn = document.getElementById('logoutBtn'), testerNameText = document.getElementById('testerNameText');
+        const form = document.getElementById('dataForm'), modeloSelect = document.getElementById('modelo'), clienteField = document.getElementById('clienteField'), clienteInput = document.getElementById('cliente'), componentesField = document.getElementById('componentesField'), componentsDiv = document.getElementById('components'), enviarBtn = document.getElementById('enviarBtn'), statusDiv = document.getElementById('status'), colorOptionsContainer = document.getElementById('colorOptionsContainer');
+        const confirmSendModal = document.getElementById('confirmSendModal'), observacaoTextarea = document.getElementById('observacao'), confirmSendBtn = document.getElementById('confirmSend'), cancelSendBtn = document.getElementById('cancelSend');
+        const feedbackModal = document.getElementById('feedbackModal'), feedbackBtn = document.getElementById('feedbackBtn'), feedbackTypeSelect = document.getElementById('feedbackType'), feedbackDescriptionTextarea = document.getElementById('feedbackDescription'), submitFeedbackBtn = document.getElementById('submitFeedbackBtn'), cancelFeedbackBtn = document.getElementById('cancelFeedback'), feedbackStatusDiv = document.getElementById('feedbackStatus');
+
+        // --- LÓGICA DE PERSISTÊNCIA E INICIALIZAÇÃO ---
+        function checkLoginStatus() {
+            const savedName = localStorage.getItem('testerName');
+            const savedColor = localStorage.getItem('testerColor');
+            if (savedName) {
+                globalTesterName = savedName;
+                globalTesterColor = savedColor || paletteColors[0];
+                showApp();
+            } else {
+                showLogin();
+            }
+        }
+        
+        function showLogin() { mainLoginScreen.classList.remove('hidden-auth'); appContent.classList.add('hidden'); mainTesterNameInput.focus(); }
+        function showApp() { mainLoginScreen.classList.add('hidden-auth'); appContent.classList.remove('hidden'); if (!recallAppInitialized) initRecallApp(); testerNameText.textContent = globalTesterName; }
+        function handleLogin() {
+            const name = mainTesterNameInput.value.trim();
+            if (name.length < 3) { loginErrorMessage.textContent = 'Por favor, digite um nome válido.'; return; }
+            loginErrorMessage.textContent = '';
+            localStorage.setItem('testerName', name);
+            if (!globalTesterColor) globalTesterColor = paletteColors[0];
+            localStorage.setItem('testerColor', globalTesterColor);
+            globalTesterName = name;
+            showApp();
+        }
+        function handleLogout() { localStorage.removeItem('testerName'); localStorage.removeItem('testerColor'); window.location.reload(); }
+
+        // --- LÓGICA DO APP DE REGISTRO ---
+        function initRecallApp() {
+            if (recallAppInitialized) return;
+            recallAppInitialized = true;
+
+            function resetForm() {
+                form.reset();
+                componentsDiv.innerHTML = '';
+                clienteField.classList.add('hidden');
+                componentesField.classList.add('hidden');
+                enviarBtn.classList.add('hidden');
+                estadoComponentes = {};
+                componentesParaExibir = [];
+                clearStatusMessage(statusDiv);
+            }
+
+            function showStatusMessage(element, message, type = 'success') {
+                element.textContent = message;
+                element.className = 'text-center my-2 p-2 rounded-md text-sm ';
+                element.classList.add(type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800');
+            }
+            function clearStatusMessage(element) { element.textContent = ''; element.className = 'text-center my-2'; }
+
+            function setupColorPicker() {
+                colorOptionsContainer.innerHTML = '';
+                paletteColors.forEach(color => {
+                    const option = document.createElement('div');
+                    option.className = 'color-option';
+                    option.style.backgroundColor = color;
+                    option.innerHTML = `<i class="fas fa-check"></i>`;
+                    if (color === globalTesterColor) option.classList.add('selected');
+                    option.addEventListener('click', () => {
+                        globalTesterColor = color;
+                        localStorage.setItem('testerColor', color);
+                        colorOptionsContainer.querySelector('.selected')?.classList.remove('selected');
+                        option.classList.add('selected');
+                    });
+                    colorOptionsContainer.appendChild(option);
+                });
+            }
+
+            function gerarComponentesUI(modelo) {
+                componentsDiv.innerHTML = ''; 
+                estadoComponentes = {};
+                if (!modelo) return;
+
+                const hideList = hideMap[modelo] || [];
+                
+                // FIX: Reverted to the original, more robust filtering logic
+                componentesParaExibir = componentesConfig.filter(comp => {
+                    if (modelo === 'HF918' && comp.id === 'botao_central') {
+                        return true; 
+                    }
+                    return !hideList.includes(comp.id);
+                });
+
+                componentesParaExibir.forEach(comp => {
+                    estadoComponentes[comp.id] = { status: STATUS_NA, obs: '' };
+                    const div = document.createElement('div');
+                    div.className = `component ${statusInfo[STATUS_NA].class}`;
+                    div.dataset.componentId = comp.id;
+                    
+                    div.innerHTML = `
+                        <div class="component-header" tabindex="0">
+                            <span class="font-semibold">${comp.label}</span>
+                            <i class="icon ${statusInfo[STATUS_NA].icon}"></i>
+                        </div>
+                        <div class="failure-details hidden mt-2">
+                            <textarea class="w-full p-2 border rounded-md bg-white" placeholder="Detalhe a falha..."></textarea>
+                        </div>
+                    `;
+                    
+                    div.querySelector('.component-header').addEventListener('click', () => changeStatus(div, comp.id));
+                    div.querySelector('.component-header').addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            changeStatus(div, comp.id);
+                        }
+                    });
+                    
+                    const textarea = div.querySelector('textarea');
+                    textarea.addEventListener('input', (e) => {
+                        estadoComponentes[comp.id].obs = e.target.value;
+                    });
+                    textarea.addEventListener('click', e => e.stopPropagation());
+                    textarea.addEventListener('keypress', e => e.stopPropagation());
+                    componentsDiv.appendChild(div);
+                });
+            }
+
+            function changeStatus(element, componentId) {
+                const currentStatus = estadoComponentes[componentId].status;
+                const nextIndex = (statusCycle.indexOf(currentStatus) + 1) % statusCycle.length;
+                const newStatus = statusCycle[nextIndex];
+                estadoComponentes[componentId].status = newStatus;
+
+                element.className = `component ${statusInfo[newStatus].class}`;
+                element.querySelector('.icon').className = `icon ${statusInfo[newStatus].icon}`;
+                
+                const detailsDiv = element.querySelector('.failure-details');
+                detailsDiv.classList.toggle('hidden', newStatus !== STATUS_FALHA);
+            }
+
+            async function submitData() {
+                enviarBtn.disabled = true;
+                enviarBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
+
+                const payload = {
+                    action: 'create', data: new Date().toISOString(),
+                    modelo: modeloSelect.value, cliente: clienteInput.value,
+                    nome_tester: globalTesterName, tester_color: globalTesterColor,
+                    observacao: observacaoTextarea.value.trim()
+                };
+
+                componentesConfig.forEach(comp => {
+                    if (componentesParaExibir.some(c => c.id === comp.id)) {
+                        const state = estadoComponentes[comp.id];
+                        payload[comp.id] = state.status === STATUS_FALHA && state.obs.trim() ? `${STATUS_FALHA} (${state.obs.trim()})` : state.status;
+                    } else {
+                        payload[comp.id] = STATUS_NA;
+                    }
+                });
+
+                try {
+                    await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+                    showStatusMessage(statusDiv, 'Dados enviados com sucesso!', 'success');
+                    setTimeout(() => resetForm(), 2000);
+                } catch (err) {
+                    showStatusMessage(statusDiv, 'Erro ao enviar. Verifique sua conexão.', 'error');
+                } finally {
+                    enviarBtn.disabled = false;
+                    enviarBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Enviar Teste';
+                }
+            }
+            
+            async function submitFeedback() {
+                const type = feedbackTypeSelect.value;
+                const description = feedbackDescriptionTextarea.value.trim();
+                if (!description) { showStatusMessage(feedbackStatusDiv, 'Por favor, descreva seu feedback.', 'error'); return; }
+
+                submitFeedbackBtn.disabled = true;
+                submitFeedbackBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
+                
+                try {
+                    const payload = { action: 'submitFeedback', timestamp: new Date().toISOString(), nome_tester: globalTesterName, tipo: type, descricao: description };
+                    await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+                    showStatusMessage(feedbackStatusDiv, 'Feedback enviado com sucesso!', 'success');
+                    setTimeout(() => { feedbackModal.classList.remove('visible'); feedbackDescriptionTextarea.value = ''; clearStatusMessage(feedbackStatusDiv); }, 2000);
+                } catch (error) {
+                    showStatusMessage(feedbackStatusDiv, 'Falha ao enviar feedback.', 'error');
+                } finally {
+                    submitFeedbackBtn.disabled = false;
+                    submitFeedbackBtn.innerHTML = 'Enviar';
+                }
+            }
+
+            // --- Event Listeners do App ---
+            modeloSelect.addEventListener('change', () => {
+                const modelo = modeloSelect.value;
+                clienteInput.value = '';
+                if (modelo) {
+                    clienteField.classList.remove('hidden');
+                    componentesField.classList.remove('hidden');
+                    enviarBtn.classList.remove('hidden');
+                    clienteInput.focus();
+                } else {
+                   resetForm();
+                }
+                clearStatusMessage(statusDiv);
+                gerarComponentesUI(modelo);
+            });
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault(); clearStatusMessage(statusDiv);
+                if (!modeloSelect.value) { showStatusMessage(statusDiv, 'Selecione um modelo.', 'error'); return; }
+                if (!clienteInput.value.trim()) { showStatusMessage(statusDiv, 'Informe o nome do cliente.', 'error'); return; }
+
+                const unmarked = componentesParaExibir.find(comp => estadoComponentes[comp.id]?.status === STATUS_NA);
+                if (unmarked) {
+                    showStatusMessage(statusDiv, `Verifique o status de "${unmarked.label}".`, 'error');
+                    const element = document.querySelector(`.component[data-component-id="${unmarked.id}"]`);
+                    element?.classList.add('unmarked-highlight');
+                    setTimeout(() => element?.classList.remove('unmarked-highlight'), 2500);
+                    return;
+                }
+                confirmSendModal.classList.add('visible');
+            });
+            
+            // Listeners dos Modais
+            confirmSendBtn.addEventListener('click', () => { confirmSendModal.classList.remove('visible'); submitData(); });
+            cancelSendBtn.addEventListener('click', () => confirmSendModal.classList.remove('visible'));
+            feedbackBtn.addEventListener('click', () => feedbackModal.classList.add('visible'));
+            cancelFeedbackBtn.addEventListener('click', () => feedbackModal.classList.remove('visible'));
+            submitFeedbackBtn.addEventListener('click', submitFeedback);
+
+            // Chamada de inicialização
+            setupColorPicker();
+        }
+        
+        // --- INICIALIZAÇÃO E LISTENERS GLOBAIS ---
+        mainLoginBtn.addEventListener('click', handleLogin);
+        mainTesterNameInput.addEventListener('keypress', (e) => { if (e.key === "Enter") handleLogin(); });
+        logoutBtn.addEventListener('click', handleLogout);
+        
+        checkLoginStatus(); // Ponto de entrada da aplicação
+    });
+    </script>
+</body>
+</html>
