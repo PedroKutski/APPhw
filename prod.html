@@ -70,10 +70,10 @@
                 <i class="fas fa-industry text-3xl text-purple-600"></i>
                 <h1 class="text-xl md:text-2xl font-bold text-slate-800 font-poppins">Área de Produção</h1>
             </div>
-            <a href="index.html" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center gap-2">
+            <button onclick="window.close();" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center gap-2">
                 <i class="fas fa-arrow-left"></i>
                 <span>Voltar ao Menu</span>
-            </a>
+            </button>
         </div>
     </header>
 
@@ -108,8 +108,7 @@
                 icon: 'fas fa-thermometer-half', 
                 type: 'page',
                 details: { 
-                    text: 'Informações detalhadas sobre o processo de fabricação de sondas...',
-                    // MODIFICADO: Agora cada padrão de fiação contém sua própria imagem.
+                    text: '<p>Informações detalhadas sobre o processo de fabricação de sondas...</p>',
                     wiring_standards: [
                         {
                             label: 'Cores do padrão T568B para cabeamento RJ45',
@@ -126,7 +125,7 @@
                             label: 'Cores específicas para aplicação de sonda',
                             colors: ['bg-[#A0D8B0]', 'bg-[#2ECC71]', 'bg-[#8B4513]', 'bg-[#3498DB]'],
                             image: {
-                                src: 'https://i.imgur.com/H9hiAtT.png',
+                                src: 'https://imgur.com/Ev9EV86.png',
                                 alt: 'Diagrama de ligação da Sonda'
                             }
                         }
@@ -135,16 +134,43 @@
             },
             { id: 'termostatos', label: 'Fabricação de Termostatos', icon: 'fas fa-temperature-low', subcategories: [ 
                 { id: 'hf801_prod', label: 'HF801', icon: 'fas fa-microchip', details: { text: 'Guia de fabricação do HF801.' } },
-                { id: 'hf810_prod', label: 'HF810', icon: 'fas fa-microchip', details: { text: 'Processos para produção do HF810.' } }
+                { id: 'hf810_prod', label: 'HF810', icon: 'fas fa-microchip', details: { text: 'Processos para produção do HF810.' } },
+                { id: 'hf900_prod', label: 'HF900', icon: 'fas fa-microchip', details: { text: 'Guia de fabricação do HF900.' } },
+                { id: 'hf918_prod', label: 'HF918', icon: 'fas fa-microchip', details: { text: 'Processos para produção do HF918.' } },
+                { id: 'hf405_prod', label: 'HF405', icon: 'fas fa-microchip', details: { text: 'Instruções para o HF405.' } }
             ]},
             { id: 'iluminacao', label: 'Fabricação de Iluminação', icon: 'fas fa-lightbulb', subcategories: [
                 { id: 'sc101_prod', label: 'SC101', icon: 'fas fa-lightbulb', details: { text: 'Instruções para o SC101.' } },
+                { id: 'sc104_prod', label: 'SC104', icon: 'fas fa-lightbulb', details: { text: 'Instruções para o SC104.' } },
+                { id: 'sc106_prod', label: 'SC106', icon: 'fas fa-lightbulb', details: { text: 'Instruções para o SC106.' } },
+                { id: 'sc109_prod', label: 'SC109', icon: 'fas fa-lightbulb', details: { text: 'Instruções para o SC109.' } },
                 { id: 'modulos_iluminacao', label: 'Módulos de Iluminação', icon: 'fas fa-boxes', subcategories: [ 
                     { id: 'sl201', label: 'SL201', icon: 'fas fa-cube', details: { text: 'Detalhes para o módulo SL201.' } }
                 ]}
             ]},
             { id: 'filtro_contatora', label: 'Filtro de Contatora', icon: 'fas fa-filter', details: { text: 'Informações sobre filtros de contatora.' } }, 
-            { id: 'rele_ac', label: 'Relé AC', icon: 'fas fa-bolt', details: { text: 'Métodos de produção de relés AC.' } }
+            { 
+                id: 'rele_ac', 
+                label: 'Relé AC', 
+                icon: 'fas fa-bolt', 
+                type: 'page',
+                details: { 
+                    text: `
+                        <div class="mt-6 pt-6 border-t border-slate-200">
+                            <h3 class="text-xl font-bold text-slate-800 font-poppins mb-3">Especificações de Montagem</h3>
+                            <ul class="list-disc list-inside space-y-2 text-slate-700">
+                                <li>Os cabos devem ser de <strong>2,5mm</strong>.</li>
+                                <li>O tamanho padrão do chicote é de <strong>20cm</strong>.</li>
+                                <li>A cobertura deve ser feita com dois termo retráteis de <strong>60mm</strong>, com <strong>6cm</strong> de comprimento cada.</li>
+                            </ul>
+                        </div>
+                    `,
+                    image: {
+                        src: 'https://i.imgur.com/L1JTbeV.png',
+                        alt: 'Diagrama do Relé AC'
+                    }
+                } 
+            }
         ];
 
         // --- ESTADO DA NAVEGAÇÃO ---
@@ -166,6 +192,12 @@
             contentDiv.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
             const currentLevel = navigationStack[navigationStack.length - 1];
             contentDiv.innerHTML = '';
+            
+            const existingBackButton = document.getElementById('category-back-button');
+            if (existingBackButton) {
+                existingBackButton.remove();
+            }
+
             currentLevel.forEach(item => {
                 const card = document.createElement('div');
                 card.className = 'prod-card p-6 rounded-2xl shadow-md cursor-pointer flex flex-col items-start gap-4';
@@ -177,6 +209,22 @@
                 card.addEventListener('click', () => handleItemClick(item));
                 contentDiv.appendChild(card);
             });
+
+            if (navigationStack.length > 1) {
+                const backButtonContainer = document.createElement('div');
+                backButtonContainer.id = 'category-back-button';
+                backButtonContainer.className = 'mt-8 flex justify-center border-t border-slate-200 pt-8';
+                const backButton = document.createElement('button');
+                backButton.className = 'bg-slate-700 hover:bg-slate-800 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center gap-2 shadow-md';
+                backButton.innerHTML = `<i class="fas fa-arrow-left"></i> <span>Voltar</span>`;
+                backButton.onclick = () => {
+                    navigationStack.pop();
+                    renderContent();
+                };
+                backButtonContainer.appendChild(backButton);
+                mainContentWrapper.appendChild(backButtonContainer);
+            }
+
             renderBreadcrumb();
         }
 
@@ -190,7 +238,7 @@
                     if (Array.isArray(level)) {
                         const parentItem = parentLevel.find(item => item.subcategories === level || (Array.isArray(item) && item[0].id === level[0].id) );
                         if (parentItem) label = parentItem.label;
-                        else if(level.length === 1 && level[0].id === 'sonda') label = level[0].label;
+                        else if(level.length === 1 && level[0].type === 'page') label = level[0].label;
                     } 
                 }
                 if (isLast) {
@@ -206,7 +254,7 @@
                         navigationStack = navigationStack.slice(0, index + 1);
                         const newCurrentLevel = navigationStack[navigationStack.length-1];
                         if(Array.isArray(newCurrentLevel) && newCurrentLevel.length === 1 && newCurrentLevel[0].type === 'page'){
-                           renderSondaPage(newCurrentLevel[0]);
+                           renderPage(newCurrentLevel[0]);
                         } else {
                            renderContent();
                         }
@@ -225,20 +273,21 @@
                 renderContent();
             } else if (item.type === 'page') {
                 navigationStack.push([item]);
-                renderSondaPage(item);
+                renderPage(item);
             } else if (item.details) {
                 showDetailModal(item);
             }
         }
         
-        /**
-         * Renderiza o conteúdo da página dedicada "Fabricação de Sonda".
-         * @param {object} item - O item da sonda.
-         */
-        function renderSondaPage(item) {
+        function renderPage(item) {
             mainContentWrapper.className = 'w-full';
             contentDiv.className = 'w-full';
             contentDiv.innerHTML = '';
+            
+            const existingBackButton = document.getElementById('category-back-button');
+            if (existingBackButton) {
+                existingBackButton.remove();
+            }
 
             const pageContainer = document.createElement('div');
             pageContainer.className = 'w-full bg-white p-4 sm:p-6 lg:p-8 rounded-2xl shadow-md flex flex-col gap-6 mx-auto max-w-7xl'; 
@@ -248,8 +297,7 @@
             title.textContent = item.label;
             pageContainer.appendChild(title);
 
-            // MODIFICADO: Renderiza a seção combinada de padrões e diagramas.
-            if (item.details.wiring_standards && item.details.wiring_standards.length > 0) {
+            if (item.details.wiring_standards) {
                 const standardsHeading = document.createElement('h3');
                 standardsHeading.className = 'text-2xl font-bold text-slate-800 text-center sm:text-left mt-8 border-t border-slate-200 pt-6';
                 standardsHeading.textContent = 'Padrões de Fiação e Diagramas';
@@ -261,14 +309,10 @@
                 item.details.wiring_standards.forEach(standard => {
                     const standardWrapper = document.createElement('div');
                     standardWrapper.className = 'flex flex-col items-center gap-4 p-4 border border-slate-200 rounded-lg shadow-sm h-full';
-
-                    // Label
                     const label = document.createElement('p');
                     label.className = 'text-center text-slate-700 font-semibold text-lg';
                     label.textContent = standard.label;
                     standardWrapper.appendChild(label);
-
-                    // Barras de cores
                     const barContainer = document.createElement('div');
                     barContainer.className = 'rj45-bar-container w-full';
                     standard.colors.forEach(colorClass => {
@@ -277,13 +321,14 @@
                         barContainer.appendChild(bar);
                     });
                     standardWrapper.appendChild(barContainer);
-
-                    // Imagem correspondente
                     if (standard.image) {
                         const imageWrapper = document.createElement('div');
                         imageWrapper.className = 'flex flex-col items-center mt-6 w-full';
+                        // MODIFICADO: Adicionado container com altura fixa para imagens proporcionais.
                         imageWrapper.innerHTML = `
-                            <img src="${standard.image.src}" alt="${standard.image.alt}" class="w-full h-auto rounded-lg shadow-lg border border-slate-200" onerror="this.onerror=null;this.src='https://placehold.co/600x400/CCCCCC/000000?text=Imagem+Indispon%C3%ADvel';">
+                            <div class="w-full h-64 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 flex items-center justify-center">
+                                <img src="${standard.image.src}" alt="${standard.image.alt}" class="w-full h-full object-contain" onerror="this.onerror=null;this.src='https://placehold.co/600x400/CCCCCC/000000?text=Imagem+Indispon%C3%ADvel';">
+                            </div>
                             <p class="text-center text-slate-500 text-sm mt-2">${standard.image.alt}</p>
                         `;
                         standardWrapper.appendChild(imageWrapper);
@@ -293,12 +338,28 @@
                 pageContainer.appendChild(standardsContainer);
             }
 
-            // Botão "Voltar"
+            if (item.details.image && !item.details.wiring_standards) {
+                const imageWrapper = document.createElement('div');
+                imageWrapper.className = 'flex flex-col items-center justify-center mt-6 w-full border-t border-slate-200 pt-6';
+                imageWrapper.innerHTML = `
+                    <img src="${item.details.image.src}" alt="${item.details.image.alt}" class="max-w-full h-auto rounded-lg shadow-lg border border-slate-200" onerror="this.onerror=null;this.src='https://placehold.co/800x600/CCCCCC/000000?text=Imagem+Indispon%C3%ADvel';">
+                    <p class="text-center text-slate-500 text-sm mt-2">${item.details.image.alt}</p>
+                `;
+                pageContainer.appendChild(imageWrapper);
+            }
+
+            if (item.details.text) {
+                const textContainer = document.createElement('div');
+                textContainer.className = 'prose max-w-none'; 
+                textContainer.innerHTML = item.details.text;
+                pageContainer.appendChild(textContainer);
+            }
+            
             const backButtonContainer = document.createElement('div');
             backButtonContainer.className = 'mt-8 flex justify-center border-t border-slate-200 pt-8';
             const backButton = document.createElement('button');
             backButton.className = 'bg-slate-700 hover:bg-slate-800 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center gap-2 shadow-md';
-            backButton.innerHTML = `<i class="fas fa-arrow-left"></i> <span>Voltar às Categorias</span>`;
+            backButton.innerHTML = `<i class="fas fa-arrow-left"></i> <span>Voltar</span>`;
             backButton.onclick = () => {
                 navigationStack.pop();
                 renderContent();
