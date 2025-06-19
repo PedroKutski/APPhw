@@ -83,21 +83,17 @@
             transform: translateY(0) scale(1); opacity: 1;
         }
 
-        /* --- NOVA ANIMAÇÃO PARA O ÍCONE DO ROBÔ --- */
-        @keyframes robotGlow {
-            0%, 100% {
-                transform: scale(1);
-                /* Sombra de texto para simular brilho */
-                text-shadow: 0 0 8px rgba(59, 130, 246, 0.5), 0 0 16px rgba(59, 130, 246, 0.3);
-            }
-            50% {
-                transform: scale(1.05);
-                text-shadow: 0 0 16px rgba(59, 130, 246, 0.7), 0 0 24px rgba(59, 130, 246, 0.5), 0 0 32px rgba(59, 130, 246, 0.3);
-            }
+        /* --- NOVA ANIMAÇÃO PARA O ÍCONE DO MICROCHIP --- */
+        @keyframes circuitGlow {
+            0%   { text-shadow: -3px -3px 8px rgba(59, 130, 246, 0.7); }
+            25%  { text-shadow: 3px -3px 8px rgba(59, 130, 246, 0.7); }
+            50%  { text-shadow: 3px 3px 8px rgba(59, 130, 246, 0.7); }
+            75%  { text-shadow: -3px 3px 8px rgba(59, 130, 246, 0.7); }
+            100% { text-shadow: -3px -3px 8px rgba(59, 130, 246, 0.7); }
         }
-        .robot-icon-style {
-            /* Aplicando a nova animação de brilho */
-            animation: robotGlow 2.5s ease-in-out infinite;
+        .chip-icon-style {
+            /* Aplicando a nova animação de circuito */
+            animation: circuitGlow 3s linear infinite;
         }
 
         /* --- Estilos dos Cards --- */
@@ -143,7 +139,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
             <!-- Título clicável para abrir créditos -->
             <div id="open-credits-trigger" class="flex items-center gap-3 cursor-pointer group">
-                <i class="fas fa-cubes-stacked text-3xl text-blue-600 group-hover:animate-pulse"></i>
+                <!-- ÍCONE RESTAURADO -->
+                <i class="fas fa-cubes text-3xl text-blue-600 group-hover:animate-pulse"></i>
                 <h1 class="text-xl md:text-2xl font-bold text-slate-800 font-poppins">Central de Qualidade</h1>
             </div>
         </div>
@@ -206,8 +203,8 @@
     <div id="creditsModal" class="modal">
         <div class="modal-content bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
             <div class="mb-6">
-                <!-- ÍCONE MODIFICADO com o novo estilo de animação -->
-                <i class="fas fa-robot text-6xl text-blue-500 robot-icon-style"></i>
+                <!-- ÍCONE DE MICROCHIP com a nova animação de circuito -->
+                <i class="fas fa-microchip text-6xl text-blue-500 chip-icon-style"></i>
             </div>
             <h3 class="text-2xl font-bold text-slate-800 font-poppins mb-2">Desenvolvido por</h3>
             <p class="text-xl text-slate-600">Pedro Kutski</p>
