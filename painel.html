@@ -19,7 +19,6 @@
     <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/plugins/ranges.js"></script>
     <!-- Dependências para Geração de PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <!-- Estilos Embutidos -->
     <style>
@@ -714,7 +713,7 @@
 
         function renderDeviceDetailsFailureChart(failedRecords, clickCallback) {
              const failureCounts = {};
-             failedRecords.forEach(rec => { ALL_COMPONENTS.forEach(comp => { if (String(rec[comp.id]).startsWith(STATUS_FALHA)) failureCounts[comp.label] = (failureCounts[comp.label] || 0) + 1; }); });
+               failedRecords.forEach(rec => { ALL_COMPONENTS.forEach(comp => { if (String(rec[comp.id]).startsWith(STATUS_FALHA)) failureCounts[comp.label] = (failureCounts[comp.label] || 0) + 1; }); });
             const sortedFailures = Object.entries(failureCounts).filter(([, count]) => count > 0).sort(([, a], [, b]) => b - a);
             
             createOrUpdateChart('deviceDetailsFailureChart', { type: 'bar', data: { labels: sortedFailures.map(f => f[0]), datasets: [{ label: 'Nº de Falhas', data: sortedFailures.map(f => f[1]), backgroundColor: '#f43f5e' }] },
@@ -869,13 +868,13 @@
 
             document.getElementById('confirm-name-btn').addEventListener('click', () => {
                 const reporterNameInput = document.getElementById('reporterName');
-                const reporterName = reporterNameInput.value.trim() || 'Usuário Anônimo';
+                const userName = "Pedro Kutski";
+                const reporterName = reporterNameInput.value.trim() || (userName ? userName : 'Usuário Anônimo');
                 
                 document.getElementById('report-name-modal').classList.remove('visible');
                 reporterNameInput.value = '';
-
-                const elementToExport = document.getElementById('charts-for-export');
-                downloadSectionAsPdf(elementToExport, 'relatorio_dashboard.pdf', reporterName);
+                
+                downloadDashboardAsPdf('relatorio_qualidade_compacto.pdf', reporterName);
             });
         }
         
@@ -917,87 +916,209 @@
             }
         }
 
-        async function downloadSectionAsPdf(elementToCapture, filename, reporterName) {
+        // ====================================================================
+        // NOVA FUNÇÃO DE GERAÇÃO DE PDF - Versão Compacta de 1 Página
+        // ====================================================================
+        async function downloadDashboardAsPdf(filename, reporterName) {
             const { jsPDF } = window.jspdf;
-            if (!elementToCapture) {
-                console.error("Elemento para exportar não encontrado.");
-                return;
-            }
-            
             showLoading();
-
             try {
-                const canvas = await html2canvas(elementToCapture, {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    backgroundColor: null // Fundo transparente para não interferir
-                });
-
-                const imgData = canvas.toDataURL('image/png');
-                const imgWidth = canvas.width;
-                const imgHeight = canvas.height;
-
-                const pdf = new jsPDF({
-                    orientation: 'p',
-                    unit: 'pt',
-                    format: 'a4'
-                });
+                const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = pdf.internal.pageSize.getHeight();
                 const margin = 40;
+                let yPos = 0;
+
+                // --- HEADER ---
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(18);
+                pdf.text('Relatório Compacto de Qualidade', pdfWidth / 2, margin, { align: 'center' });
+                yPos = margin + 10;
                 
-                const contentWidth = pdfWidth - margin * 2;
-                const contentHeight = pdfHeight - margin * 2 - 60; // Desconta cabeçalho/rodapé
-                const headerStartY = 40;
-
-                const ratio = imgWidth / contentWidth;
-                const scaledHeight = imgHeight / ratio;
-
-                let yPos = headerStartY + 45; 
-                
-                // Adicionar um resumo dos filtros
-                const model = elements.modelFilter.value || 'Todos';
-                const client = elements.clientFilter.value || 'Todos';
-                const period = document.getElementById('dateRangePicker').value || 'Período não definido';
-
-                pdf.setFontSize(11);
-                pdf.setTextColor(40);
                 pdf.setFont('helvetica', 'normal');
-                const filtersText = `Filtros Aplicados: Modelo: ${model} | Cliente: ${client} | Período: ${period}`;
-                const splitText = pdf.splitTextToSize(filtersText, contentWidth);
-                pdf.text(splitText, margin, yPos);
-                yPos += (splitText.length * 12) + 15;
+                pdf.setFontSize(9);
+                pdf.setTextColor(100, 116, 139);
+                pdf.text(`Gerado por: ${reporterName}`, margin, yPos);
+                pdf.text(`Data: ${new Date().toLocaleString('pt-BR')}`, pdfWidth - margin, yPos, { align: 'right' });
+                yPos += 20;
+                pdf.setDrawColor(203, 213, 225);
+                pdf.line(margin, yPos, pdfWidth - margin, yPos);
+                yPos += 20;
 
-                // Adicionar a imagem dos gráficos
-                pdf.addImage(imgData, 'PNG', margin, yPos, contentWidth, scaledHeight, undefined, 'FAST');
-                
-                // Adicionar Cabeçalho e Rodapé
-                const totalPages = pdf.internal.getNumberOfPages();
-                for (let i = 1; i <= totalPages; i++) {
-                    pdf.setPage(i);
-                    pdf.setFontSize(18);
+                // --- Helper para Títulos de Seção ---
+                const addSectionTitle = (title) => {
+                    if (yPos > pdfHeight - margin) { // Evita sobreposição com rodapé
+                        console.warn("Conteúdo excede uma página, pode haver cortes.");
+                        return;
+                    }
                     pdf.setFont('helvetica', 'bold');
-                    pdf.text('Relatório de Análise de Qualidade', margin, headerStartY);
+                    pdf.setFontSize(12);
+                    pdf.setTextColor(30, 41, 59);
+                    pdf.text(title, margin, yPos);
+                    yPos += 18;
+                };
+
+                // --- 1. Filtros Aplicados ---
+                addSectionTitle("Filtros Aplicados");
+                const model = elements.modelFilter.options[elements.modelFilter.selectedIndex].text;
+                const client = elements.clientFilter.options[elements.clientFilter.selectedIndex].text;
+                const period = document.getElementById('dateRangePicker').value || 'Todos';
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(10);
+                pdf.setTextColor(71, 85, 105);
+                pdf.text(`- Modelo: ${model}   |   Cliente: ${client}   |   Período: ${period}`, margin, yPos);
+                yPos += 30;
+
+
+                // --- 2. Resumo Geral ---
+                addSectionTitle("Resumo Geral de Status");
+                const overallChart = charts['overallStatusChart'];
+                if (overallChart) {
+                    const [okCount, failCount] = overallChart.data.datasets[0].data;
+                    const total = okCount + failCount;
+                    const okPercent = total > 0 ? ((okCount / total) * 100).toFixed(1) : "0.0";
+                    const failPercent = total > 0 ? ((failCount / total) * 100).toFixed(1) : "0.0";
                     
-                    pdf.setFontSize(10);
-                    pdf.setFont('helvetica', 'normal');
-                    const today = new Date().toLocaleDateString('pt-BR');
-                    pdf.text(`Gerado por: ${reporterName}`, margin, headerStartY + 20);
-                    pdf.text(`Data: ${today}`, pdfWidth - margin, headerStartY + 20, { align: 'right' });
-                    pdf.setLineWidth(0.5);
-                    pdf.line(margin, headerStartY + 30, pdfWidth - margin, headerStartY + 30);
-                    
-                    pdf.setFontSize(9);
-                    pdf.setTextColor(150);
-                    pdf.text(`Página ${i} de ${totalPages}`, pdfWidth - margin, pdfHeight - 20, { align: 'right' });
+                    pdf.setFillColor(20, 184, 166); // Verde
+                    pdf.rect(margin, yPos, 8, 8, 'F');
+                    pdf.text(`Dispositivos OK: ${okCount} (${okPercent}%)`, margin + 12, yPos + 7);
+
+                    pdf.setFillColor(244, 63, 94); // Vermelho
+                    pdf.rect(margin + 200, yPos, 8, 8, 'F');
+                    pdf.text(`Dispositivos com Falha: ${failCount} (${failPercent}%)`, margin + 212, yPos + 7);
+                    yPos += 30;
                 }
+                
+                pdf.line(margin, yPos - 10, pdfWidth - margin, yPos - 10); // Separador
+
+                // --- Layout de duas colunas ---
+                const col1X = margin;
+                const col2X = pdfWidth / 2 + 10;
+                const colWidth = pdfWidth / 2 - margin - 5;
+                let yPosCol1 = yPos;
+                let yPosCol2 = yPos;
+
+                // --- 3. Testes por Modelo (Coluna 1) ---
+                yPos = yPosCol1;
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(12);
+                pdf.setTextColor(30, 41, 59);
+                pdf.text("Testes por Modelo", col1X, yPos);
+                yPos += 18;
+                
+                const modelChart = charts['testsByModelChart'];
+                if (modelChart && modelChart.data.labels.length > 0) {
+                    const tableData = modelChart.data.labels.map((label, i) => ({
+                        label: label,
+                        value: modelChart.data.datasets[0].data[i]
+                    }));
+                    
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setFontSize(9);
+                    pdf.text("Modelo", col1X, yPos);
+                    pdf.text("Nº de Testes", col1X + colWidth - 50, yPos, { align: 'right' });
+                    yPos += 5;
+                    pdf.setDrawColor(226, 232, 240);
+                    pdf.line(col1X, yPos, col1X + colWidth, yPos);
+                    yPos += 12;
+
+                    pdf.setFont('helvetica', 'normal');
+                    tableData.forEach(item => {
+                        pdf.text(item.label, col1X, yPos);
+                        pdf.text(String(item.value), col1X + colWidth - 50, yPos, { align: 'right' });
+                        yPos += 14;
+                    });
+                } else {
+                     pdf.setFont('helvetica', 'italic').setFontSize(9).text('Nenhum dado.', col1X, yPos);
+                     yPos += 14;
+                }
+                yPosCol1 = yPos + 15; // Próximo item na coluna 1
+                
+                // --- 4. Testes por Cliente (Coluna 1) ---
+                yPos = yPosCol1;
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(12);
+                pdf.setTextColor(30, 41, 59);
+                pdf.text("Testes por Cliente (Top 10)", col1X, yPos);
+                yPos += 18;
+                
+                const clientChart = charts['testsByClientChart'];
+                if (clientChart && clientChart.data.labels.length > 0) {
+                     const tableData = clientChart.data.labels.map((label, i) => ({
+                        label: label,
+                        value: clientChart.data.datasets[0].data[i]
+                    }));
+                    
+                    pdf.setFont('helvetica', 'bold').setFontSize(9);
+                    pdf.text("Cliente", col1X, yPos);
+                    pdf.text("Nº de Testes", col1X + colWidth - 50, yPos, { align: 'right' });
+                    yPos += 5;
+                    pdf.line(col1X, yPos, col1X + colWidth, yPos);
+                    yPos += 12;
+
+                    pdf.setFont('helvetica', 'normal');
+                    tableData.forEach(item => {
+                        pdf.text(item.label, col1X, yPos, { maxWidth: colWidth - 60 });
+                        pdf.text(String(item.value), col1X + colWidth - 50, yPos, { align: 'right' });
+                        yPos += 14;
+                    });
+                } else {
+                    pdf.setFont('helvetica', 'italic').setFontSize(9).text('Nenhum dado.', col1X, yPos);
+                    yPos += 14;
+                }
+                yPosCol1 = yPos;
+
+
+                // --- 5. Top Falhas (Coluna 2) ---
+                yPos = yPosCol2;
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(12);
+                pdf.setTextColor(30, 41, 59);
+                pdf.text("Top Falhas por Componente", col2X, yPos);
+                yPos += 18;
+                
+                const failuresChart = charts['failuresByComponentChart'];
+                if (failuresChart && failuresChart.data.labels.length > 0) {
+                    const tableData = failuresChart.data.labels.map((label, i) => ({
+                        label: label,
+                        value: failuresChart.data.datasets[0].data[i]
+                    }));
+
+                    pdf.setFont('helvetica', 'bold').setFontSize(9);
+                    pdf.text("Componente", col2X, yPos);
+                    pdf.text("Nº de Falhas", col2X + colWidth - 50, yPos, { align: 'right' });
+                    yPos += 5;
+                    pdf.line(col2X, yPos, col2X + colWidth, yPos);
+                    yPos += 12;
+
+                    pdf.setFont('helvetica', 'normal');
+                    tableData.forEach(item => {
+                        pdf.text(item.label, col2X, yPos);
+                        pdf.text(String(item.value), col2X + colWidth - 50, yPos, { align: 'right' });
+                        yPos += 14;
+                    });
+                } else {
+                    pdf.setFont('helvetica', 'italic').setFontSize(9).text('Nenhuma falha registrada.', col2X, yPos);
+                    yPos += 14;
+                }
+                yPosCol2 = yPos;
+                
+
+                // --- FOOTER ---
+                const finalY = Math.max(yPosCol1, yPosCol2);
+                pdf.setDrawColor(203, 213, 225);
+                pdf.line(margin, pdfHeight - margin + 10, pdfWidth - margin, pdfHeight - margin + 10);
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(8);
+                pdf.setTextColor(148, 163, 184);
+                pdf.text("Smartly - Relatório de Análise de Qualidade. Documento confidencial.", pdfWidth / 2, pdfHeight - margin + 25, { align: 'center' });
+
 
                 pdf.save(filename);
 
             } catch (error) {
                 console.error("Erro ao gerar o PDF:", error);
-                alert("Ocorreu um erro ao gerar o PDF. Tente novamente.");
+                console.error("Ocorreu um erro ao gerar o PDF compacto. Verifique o console.");
             } finally {
                 hideLoading();
             }
