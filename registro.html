@@ -122,10 +122,14 @@
                 </div>
                 
                 <div class="flex items-center gap-4">
-                     <div id="testerNameDisplay" class="text-sm text-slate-600 flex items-center gap-2">
+                     <!-- UPDATED: Added logout button -->
+                    <div id="testerNameDisplay" class="text-sm text-slate-600 flex items-center gap-2">
                         <i class="fas fa-user-circle text-slate-500"></i>
                         <span>Testador:</span>
                         <span id="testerNameText" class="font-semibold"></span>
+                        <button id="logoutBtn" title="Trocar Testador" class="ml-2 text-slate-500 hover:text-red-500 transition-colors duration-200 focus:outline-none">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
                     </div>
                     <button id="backToMenuBtn" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-colors duration-200">
                         Voltar ao Menu Principal
@@ -139,8 +143,7 @@
                 <h1 class="mt-4"><i class="fas fa-edit" style="margin-right:10px;"></i>Formulário de Teste</h1>
                 <form id="dataForm">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- UPDATED: Replaced clipboard icon with a more abstract list/data icon -->
-                        <div class="field"><label for="modelo" class="font-semibold">Modelo do Dispositivo</label><select id="modelo" name="modelo" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"><option value="" disabled selected>Selecione o modelo</option><option value="HF801">☰ HF801</option><option value="HF810">☰ HF810</option><option value="HF900">☰ HF900</option><option value="HF405">☰ HF405</option><option value="HF918">☰ HF918</option></select></div>
+                        <div class="field"><label for="modelo" class="font-semibold">Modelo do Dispositivo</label><select id="modelo" name="modelo" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"><option value="" disabled selected>Selecione o modelo</option><option value="HF801">HF801</option><option value="HF810">HF810</option><option value="HF900">HF900</option><option value="HF405">HF405</option><option value="HF918">HF918</option></select></div>
                         <div class="field hidden" id="clienteField"><label for="cliente" class="font-semibold">Nome do Cliente</label><input type="text" id="cliente" name="cliente" placeholder="Ex: João Silva" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/></div>
                     </div>
                     <fieldset class="hidden" id="componentesField"><legend class="font-semibold text-lg text-slate-700 mt-6 mb-4 border-b pb-2">Status dos Componentes</legend><div id="components" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></fieldset>
@@ -206,7 +209,7 @@
 
         // --- SELEÇÃO DE ELEMENTOS DOM ---
         const mainLoginScreen = document.getElementById('mainLoginScreen'), mainTesterNameInput = document.getElementById('mainTesterName'), mainLoginBtn = document.getElementById('mainLoginBtn'), loginErrorMessage = document.getElementById('loginErrorMessage');
-        const appContent = document.getElementById('app-content'), testerNameText = document.getElementById('testerNameText'), backToMenuBtn = document.getElementById('backToMenuBtn');
+        const appContent = document.getElementById('app-content'), testerNameText = document.getElementById('testerNameText'), backToMenuBtn = document.getElementById('backToMenuBtn'), logoutBtn = document.getElementById('logoutBtn');
         const form = document.getElementById('dataForm'), modeloSelect = document.getElementById('modelo'), clienteField = document.getElementById('clienteField'), clienteInput = document.getElementById('cliente'), componentesField = document.getElementById('componentesField'), componentsDiv = document.getElementById('components'), enviarBtn = document.getElementById('enviarBtn'), statusDiv = document.getElementById('status');
         const confirmSendModal = document.getElementById('confirmSendModal'), observacaoTextarea = document.getElementById('observacao'), confirmSendBtn = document.getElementById('confirmSend'), cancelSendBtn = document.getElementById('cancelSend');
         const feedbackModal = document.getElementById('feedbackModal'), feedbackBtn = document.getElementById('feedbackBtn'), feedbackTypeSelect = document.getElementById('feedbackType'), feedbackDescriptionTextarea = document.getElementById('feedbackDescription'), submitFeedbackBtn = document.getElementById('submitFeedbackBtn'), cancelFeedbackBtn = document.getElementById('cancelFeedback'), feedbackStatusDiv = document.getElementById('feedbackStatus');
@@ -222,8 +225,9 @@
             }
         }
         
-        function showLogin() { mainLoginScreen.classList.remove('hidden-auth'); appContent.classList.add('hidden'); mainTesterNameInput.focus(); }
+        function showLogin() { mainLoginScreen.classList.remove('hidden-auth'); appContent.classList.add('hidden'); mainTesterNameInput.focus(); mainTesterNameInput.value = '';}
         function showApp() { mainLoginScreen.classList.add('hidden-auth'); appContent.classList.remove('hidden'); if (!recallAppInitialized) initRecallApp(); testerNameText.textContent = globalTesterName; }
+        
         function handleLogin() {
             const name = mainTesterNameInput.value.trim();
             if (name.length < 3) { loginErrorMessage.textContent = 'Por favor, digite um nome válido.'; return; }
@@ -232,166 +236,20 @@
             globalTesterName = name;
             showApp();
         }
+
+        function handleLogout() {
+            localStorage.removeItem('testerName');
+            globalTesterName = '';
+            if(recallAppInitialized) {
+                resetForm();
+            }
+            showLogin();
+        }
         
         // --- LÓGICA DO APP DE REGISTRO ---
         function initRecallApp() {
             if (recallAppInitialized) return;
             recallAppInitialized = true;
-
-            function resetForm() {
-                form.reset();
-                componentsDiv.innerHTML = '';
-                clienteField.classList.add('hidden');
-                componentesField.classList.add('hidden');
-                enviarBtn.classList.add('hidden');
-                estadoComponentes = {};
-                componentesParaExibir = [];
-                clearStatusMessage(statusDiv);
-            }
-
-            function showStatusMessage(element, message, type = 'success') {
-                element.textContent = message;
-                element.className = 'text-center my-2 p-2 rounded-md text-sm';
-                if (type === 'success') {
-                    element.classList.add('bg-green-100', 'text-green-800');
-                } else {
-                    element.classList.add('bg-red-100', 'text-red-800');
-                }
-            }
-            function clearStatusMessage(element) { element.textContent = ''; element.className = 'text-center my-2'; }
-
-            function gerarComponentesUI(modelo) {
-                componentsDiv.innerHTML = ''; 
-                estadoComponentes = {};
-                if (!modelo) return;
-
-                const hideList = hideMap[modelo] || [];
-                
-                componentesParaExibir = componentesConfig.filter(comp => {
-                    if (modelo === 'HF918' && comp.id === 'botao_central') {
-                        return true; 
-                    }
-                    return !hideList.includes(comp.id);
-                });
-
-                componentesParaExibir.forEach(comp => {
-                    estadoComponentes[comp.id] = { status: STATUS_NA, obs: '' };
-                    const div = document.createElement('div');
-                    div.className = `component ${statusInfo[STATUS_NA].class}`;
-                    div.dataset.componentId = comp.id;
-                    
-                    div.innerHTML = `
-                        <div class="component-header" tabindex="0">
-                            <span class="font-semibold">${comp.label}</span>
-                            <i class="icon ${statusInfo[STATUS_NA].icon}"></i>
-                        </div>
-                        <div class="failure-details hidden mt-2">
-                            <textarea class="w-full p-2 border rounded-md bg-white" placeholder="Detalhe a falha..."></textarea>
-                        </div>
-                    `;
-                    
-                    div.querySelector('.component-header').addEventListener('click', () => changeStatus(div, comp.id));
-                    div.querySelector('.component-header').addEventListener('keypress', (e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            changeStatus(div, comp.id);
-                        }
-                    });
-                    
-                    const textarea = div.querySelector('textarea');
-                    textarea.addEventListener('input', (e) => {
-                        estadoComponentes[comp.id].obs = e.target.value;
-                    });
-                    textarea.addEventListener('click', e => e.stopPropagation());
-                    textarea.addEventListener('keypress', e => e.stopPropagation());
-                    componentsDiv.appendChild(div);
-                });
-            }
-
-            function changeStatus(element, componentId) {
-                const currentStatus = estadoComponentes[componentId].status;
-                const nextIndex = (statusCycle.indexOf(currentStatus) + 1) % statusCycle.length;
-                const newStatus = statusCycle[nextIndex];
-                estadoComponentes[componentId].status = newStatus;
-
-                element.className = `component ${statusInfo[newStatus].class}`;
-                element.querySelector('.icon').className = `icon ${statusInfo[newStatus].icon}`;
-                
-                const detailsDiv = element.querySelector('.failure-details');
-                detailsDiv.classList.toggle('hidden', newStatus !== STATUS_FALHA);
-            }
-            
-            function getTestColor() {
-                const statuses = componentesParaExibir.map(c => estadoComponentes[c.id].status);
-                
-                if (statuses.includes(STATUS_FALHA)) {
-                    return '#FEE2E2'; // Vermelho (Falha)
-                }
-                if (statuses.every(s => s === STATUS_OK)) {
-                    return '#A7F3D0'; // Verde (Tudo OK)
-                }
-                 if (statuses.some(s => s === STATUS_OK)) {
-                    return '#FDE68A'; // Amarelo (OK e N/A)
-                }
-                return '#F3F4F6'; // Cinza (Neutra, caso só tenha N/A)
-            }
-
-
-            async function submitData() {
-                enviarBtn.disabled = true;
-                enviarBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
-                
-                const testColor = getTestColor();
-
-                const payload = {
-                    action: 'create', data: new Date().toISOString(),
-                    modelo: modeloSelect.value, cliente: clienteInput.value,
-                    nome_tester: globalTesterName, tester_color: testColor,
-                    observacao: observacaoTextarea.value.trim()
-                };
-
-                componentesConfig.forEach(comp => {
-                    if (componentesParaExibir.some(c => c.id === comp.id)) {
-                        const state = estadoComponentes[comp.id];
-                        payload[comp.id] = state.status === STATUS_FALHA && state.obs.trim() ? `${STATUS_FALHA} (${state.obs.trim()})` : state.status;
-                    } else {
-                        payload[comp.id] = '-';
-                    }
-                });
-
-                try {
-                    await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-                    showStatusMessage(statusDiv, 'Dados enviados com sucesso!', 'success');
-                    setTimeout(() => resetForm(), 2000);
-                } catch (err) {
-                    console.error("Erro no envio:", err);
-                    showStatusMessage(statusDiv, 'Erro ao enviar. Verifique sua conexão.', 'error');
-                } finally {
-                    enviarBtn.disabled = false;
-                    enviarBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Enviar Teste';
-                }
-            }
-            
-            async function submitFeedback() {
-                const type = feedbackTypeSelect.value;
-                const description = feedbackDescriptionTextarea.value.trim();
-                if (!description) { showStatusMessage(feedbackStatusDiv, 'Por favor, descreva seu feedback.', 'error'); return; }
-
-                submitFeedbackBtn.disabled = true;
-                submitFeedbackBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
-                
-                try {
-                    const payload = { action: 'submitFeedback', timestamp: new Date().toISOString(), nome_tester: globalTesterName, tipo: type, descricao: description };
-                    await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-                    showStatusMessage(feedbackStatusDiv, 'Feedback enviado com sucesso!', 'success');
-                    setTimeout(() => { feedbackModal.classList.remove('visible'); feedbackDescriptionTextarea.value = ''; clearStatusMessage(feedbackStatusDiv); }, 2000);
-                } catch (error) {
-                    showStatusMessage(feedbackStatusDiv, 'Falha ao enviar feedback.', 'error');
-                } finally {
-                    submitFeedbackBtn.disabled = false;
-                    submitFeedbackBtn.innerHTML = 'Enviar';
-                }
-            }
 
             // --- Event Listeners do App ---
             modeloSelect.addEventListener('change', () => {
@@ -432,10 +290,166 @@
             cancelFeedbackBtn.addEventListener('click', () => feedbackModal.classList.remove('visible'));
             submitFeedbackBtn.addEventListener('click', submitFeedback);
         }
+
+        function resetForm() {
+            form.reset();
+            componentsDiv.innerHTML = '';
+            clienteField.classList.add('hidden');
+            componentesField.classList.add('hidden');
+            enviarBtn.classList.add('hidden');
+            estadoComponentes = {};
+            componentesParaExibir = [];
+            clearStatusMessage(statusDiv);
+        }
+
+        function showStatusMessage(element, message, type = 'success') {
+            element.textContent = message;
+            element.className = 'text-center my-2 p-2 rounded-md text-sm';
+            if (type === 'success') {
+                element.classList.add('bg-green-100', 'text-green-800');
+            } else {
+                element.classList.add('bg-red-100', 'text-red-800');
+            }
+        }
+        function clearStatusMessage(element) { element.textContent = ''; element.className = 'text-center my-2'; }
+
+        function gerarComponentesUI(modelo) {
+            componentsDiv.innerHTML = ''; 
+            estadoComponentes = {};
+            if (!modelo) return;
+
+            const hideList = hideMap[modelo] || [];
+            
+            componentesParaExibir = componentesConfig.filter(comp => {
+                if (modelo === 'HF918' && comp.id === 'botao_central') {
+                    return true; 
+                }
+                return !hideList.includes(comp.id);
+            });
+
+            componentesParaExibir.forEach(comp => {
+                estadoComponentes[comp.id] = { status: STATUS_NA, obs: '' };
+                const div = document.createElement('div');
+                div.className = `component ${statusInfo[STATUS_NA].class}`;
+                div.dataset.componentId = comp.id;
+                
+                div.innerHTML = `
+                    <div class="component-header" tabindex="0">
+                        <span class="font-semibold">${comp.label}</span>
+                        <i class="icon ${statusInfo[STATUS_NA].icon}"></i>
+                    </div>
+                    <div class="failure-details hidden mt-2">
+                        <textarea class="w-full p-2 border rounded-md bg-white" placeholder="Detalhe a falha..."></textarea>
+                    </div>
+                `;
+                
+                div.querySelector('.component-header').addEventListener('click', () => changeStatus(div, comp.id));
+                div.querySelector('.component-header').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        changeStatus(div, comp.id);
+                    }
+                });
+                
+                const textarea = div.querySelector('textarea');
+                textarea.addEventListener('input', (e) => {
+                    estadoComponentes[comp.id].obs = e.target.value;
+                });
+                textarea.addEventListener('click', e => e.stopPropagation());
+                textarea.addEventListener('keypress', e => e.stopPropagation());
+                componentsDiv.appendChild(div);
+            });
+        }
+
+        function changeStatus(element, componentId) {
+            const currentStatus = estadoComponentes[componentId].status;
+            const nextIndex = (statusCycle.indexOf(currentStatus) + 1) % statusCycle.length;
+            const newStatus = statusCycle[nextIndex];
+            estadoComponentes[componentId].status = newStatus;
+
+            element.className = `component ${statusInfo[newStatus].class}`;
+            element.querySelector('.icon').className = `icon ${statusInfo[newStatus].icon}`;
+            
+            const detailsDiv = element.querySelector('.failure-details');
+            detailsDiv.classList.toggle('hidden', newStatus !== STATUS_FALHA);
+        }
+        
+        function getTestColor() {
+            const statuses = componentesParaExibir.map(c => estadoComponentes[c.id].status);
+            
+            if (statuses.includes(STATUS_FALHA)) {
+                return '#FEE2E2'; // Vermelho (Falha)
+            }
+            if (statuses.every(s => s === STATUS_OK)) {
+                return '#A7F3D0'; // Verde (Tudo OK)
+            }
+             if (statuses.some(s => s === STATUS_OK)) {
+                return '#FDE68A'; // Amarelo (OK e N/A)
+            }
+            return '#F3F4F6'; // Cinza (Neutra, caso só tenha N/A)
+        }
+
+
+        async function submitData() {
+            enviarBtn.disabled = true;
+            enviarBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
+            
+            const testColor = getTestColor();
+
+            const payload = {
+                action: 'create', data: new Date().toISOString(),
+                modelo: modeloSelect.value, cliente: clienteInput.value,
+                nome_tester: globalTesterName, tester_color: testColor,
+                observacao: observacaoTextarea.value.trim()
+            };
+
+            componentesConfig.forEach(comp => {
+                if (componentesParaExibir.some(c => c.id === comp.id)) {
+                    const state = estadoComponentes[comp.id];
+                    payload[comp.id] = state.status === STATUS_FALHA && state.obs.trim() ? `${STATUS_FALHA} (${state.obs.trim()})` : state.status;
+                } else {
+                    payload[comp.id] = '-';
+                }
+            });
+
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+                showStatusMessage(statusDiv, 'Dados enviados com sucesso!', 'success');
+                setTimeout(() => resetForm(), 2000);
+            } catch (err) {
+                console.error("Erro no envio:", err);
+                showStatusMessage(statusDiv, 'Erro ao enviar. Verifique sua conexão.', 'error');
+            } finally {
+                enviarBtn.disabled = false;
+                enviarBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Enviar Teste';
+            }
+        }
+        
+        async function submitFeedback() {
+            const type = feedbackTypeSelect.value;
+            const description = feedbackDescriptionTextarea.value.trim();
+            if (!description) { showStatusMessage(feedbackStatusDiv, 'Por favor, descreva seu feedback.', 'error'); return; }
+
+            submitFeedbackBtn.disabled = true;
+            submitFeedbackBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
+            
+            try {
+                const payload = { action: 'submitFeedback', timestamp: new Date().toISOString(), nome_tester: globalTesterName, tipo: type, descricao: description };
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+                showStatusMessage(feedbackStatusDiv, 'Feedback enviado com sucesso!', 'success');
+                setTimeout(() => { feedbackModal.classList.remove('visible'); feedbackDescriptionTextarea.value = ''; clearStatusMessage(feedbackStatusDiv); }, 2000);
+            } catch (error) {
+                showStatusMessage(feedbackStatusDiv, 'Falha ao enviar feedback.', 'error');
+            } finally {
+                submitFeedbackBtn.disabled = false;
+                submitFeedbackBtn.innerHTML = 'Enviar';
+            }
+        }
         
         // --- INICIALIZAÇÃO E LISTENERS GLOBAIS ---
         mainLoginBtn.addEventListener('click', handleLogin);
         mainTesterNameInput.addEventListener('keypress', (e) => { if (e.key === "Enter") handleLogin(); });
+        logoutBtn.addEventListener('click', handleLogout);
         
         backToMenuBtn.addEventListener('click', () => {
             window.close();
