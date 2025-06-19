@@ -31,26 +31,32 @@
             background-color: #f1f5f9;
         }
         
+        /* Estilo da Tela de Login - Moderno e Neutro */
         #mainLoginScreen {
             display: flex; position: fixed; top: 0; left: 0;
             width: 100%; height: 100%;
-            background: linear-gradient(135deg, #2c3e50, #34495e);
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
             justify-content: center; align-items: center; z-index: 9999;
             opacity: 1; transition: opacity 0.5s ease-out;
         }
         #mainLoginScreen.hidden-auth { opacity: 0; pointer-events: none; }
         #mainLoginScreen .login-container {
             background: #ffffff; padding: 40px; border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 100%; max-width: 420px;
-            text-align: center; color: #2c3e50;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); width: 100%; max-width: 420px;
+            text-align: center; color: #1f2937;
             transform: translateY(0); opacity: 1; animation: fadeInUpLogin 0.6s ease-out;
+            border-top: 5px solid #64748b; /* Slate 500 */
         }
         @keyframes fadeInUpLogin {
             from { transform: translateY(20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
-        #mainLoginScreen h1 { font-family: var(--font-poppins); margin-bottom: 25px; font-size: 2rem; color: #3498db; font-weight: 700; }
-        #mainLoginScreen h1 i { margin-right: 12px; color: #2980b9; }
+        #mainLoginScreen h1 { 
+            font-family: var(--font-poppins); margin-bottom: 25px; font-size: 1.8rem; 
+            color: #1e293b; /* Slate 800 */
+            font-weight: 700; 
+        }
+        #mainLoginScreen h1 i { margin-right: 12px; color: #64748b; /* Slate 500 */ }
 
         #recall-container .app { 
             background: var(--card-background); padding: 35px 40px; border-radius: 20px; 
@@ -69,13 +75,6 @@
         #recall-container .status-na { background-color: var(--na-bg); border-color: var(--na-border); color: var(--na-text); }
         #recall-container .status-ok { background-color: var(--success-bg); border-color: var(--success-border); color: var(--success-text); }
         #recall-container .status-falha { background-color: var(--failure-bg); border-color: var(--failure-border); color: var(--failure-text); }
-        
-        #recall-container .color-options { display: flex; justify-content: space-around; gap: 10px; }
-        #recall-container .color-option { flex-grow: 1; height: 40px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease-in-out; border: 3px solid transparent; display: flex; justify-content: center; align-items: center; background-clip: padding-box; }
-        #recall-container .color-option:hover { transform: scale(1.05); }
-        #recall-container .color-option.selected { border-color: var(--primary-color); }
-        #recall-container .color-option.selected i { opacity: 1; }
-        #recall-container .color-option i { font-size: 1.2rem; opacity: 0; transition: opacity 0.25s ease; color: var(--text-color); }
         
         .modal { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30, 41, 59, 0.6); 
@@ -101,12 +100,12 @@
     <!-- Tela de Login/Identificação (Inicialmente visível) -->
     <div id="mainLoginScreen">
         <div class="login-container">
-            <h1><i class="fas fa-user-check" style="margin-right: 10px;"></i>Identificação do Testador</h1>
-            <div class="field">
-                <label for="mainTesterName" class="font-semibold text-slate-700">Seu Nome:</label>
-                <input type="text" id="mainTesterName" placeholder="Digite seu nome" required autofocus class="mt-1 block w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+            <h1><i class="fas fa-user-check"></i>Identificação do Testador</h1>
+            <div class="field text-left">
+                <label for="mainTesterName" class="font-semibold text-slate-700 mb-1 block">Seu Nome:</label>
+                <input type="text" id="mainTesterName" placeholder="Digite seu nome" required autofocus class="block w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500" />
             </div>
-            <button type="button" id="mainLoginBtn" class="w-full mt-4 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+            <button type="button" id="mainLoginBtn" class="w-full mt-6 bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
                 <i class="fas fa-sign-in-alt mr-2"></i>Entrar
             </button>
             <p id="loginErrorMessage" class="text-red-500 text-sm mt-4 h-4"></p>
@@ -121,12 +120,15 @@
                     <i class="fas fa-clipboard-list text-2xl text-amber-500"></i>
                     <h1 class="text-xl md:text-2xl font-bold text-slate-800 font-poppins">Registrar Novo Teste</h1>
                 </div>
+                
                 <div class="flex items-center gap-4">
-                    <a href="index.html" class="text-slate-600 hover:text-blue-600 transition-colors" title="Voltar ao Menu">
-                        <i class="fas fa-home text-xl"></i>
-                    </a>
-                    <button id="logoutBtn" class="text-slate-600 hover:text-red-600 transition-colors" title="Sair / Trocar Usuário">
-                        <i class="fas fa-sign-out-alt text-xl"></i>
+                     <div id="testerNameDisplay" class="text-sm text-slate-600 flex items-center gap-2">
+                        <i class="fas fa-user-circle text-slate-500"></i>
+                        <span>Testador:</span>
+                        <span id="testerNameText" class="font-semibold"></span>
+                    </div>
+                    <button id="backToMenuBtn" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-colors duration-200">
+                        Voltar ao Menu Principal
                     </button>
                 </div>
             </div>
@@ -134,16 +136,13 @@
 
         <main id="recall-container" class="flex-grow flex items-start justify-center p-4 sm:p-6 lg:p-8">
             <div class="app">
-                <div id="testerNameDisplay" class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg flex items-center gap-2">
-                    <i class="fas fa-user-circle"></i> <span id="testerNameText"></span>
-                </div>
                 <h1 class="mt-4"><i class="fas fa-edit" style="margin-right:10px;"></i>Formulário de Teste</h1>
                 <form id="dataForm">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="field"><label for="modelo" class="font-semibold">Modelo do Dispositivo</label><select id="modelo" name="modelo" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"><option value="" disabled selected>Selecione o modelo</option><option value="HF801">HF801</option><option value="HF810">HF810</option><option value="HF900">HF900</option><option value="HF405">HF405</option><option value="HF918">HF918</option></select></div>
+                        <!-- UPDATED: Replaced clipboard icon with a more abstract list/data icon -->
+                        <div class="field"><label for="modelo" class="font-semibold">Modelo do Dispositivo</label><select id="modelo" name="modelo" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"><option value="" disabled selected>Selecione o modelo</option><option value="HF801">☰ HF801</option><option value="HF810">☰ HF810</option><option value="HF900">☰ HF900</option><option value="HF405">☰ HF405</option><option value="HF918">☰ HF918</option></select></div>
                         <div class="field hidden" id="clienteField"><label for="cliente" class="font-semibold">Nome do Cliente</label><input type="text" id="cliente" name="cliente" placeholder="Ex: João Silva" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/></div>
                     </div>
-                    <div class="field mt-4"><label class="font-semibold">Cor de Identificação</label><div class="color-options" id="colorOptionsContainer"></div></div>
                     <fieldset class="hidden" id="componentesField"><legend class="font-semibold text-lg text-slate-700 mt-6 mb-4 border-b pb-2">Status dos Componentes</legend><div id="components" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></fieldset>
                     <button type="submit" class="hidden w-full mt-8 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1" id="enviarBtn">
                         <i class="fas fa-paper-plane" style="margin-right: 8px;"></i>Enviar Teste
@@ -178,7 +177,7 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- ESTADO E CONFIGURAÇÃO ---
-        let globalTesterName = '', globalTesterColor = '';
+        let globalTesterName = '';
         let recallAppInitialized = false;
 
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyE4h4LL3vk8n0m2A0C3p3n6Plz9w9YV0Ip_N8CpBpIk9VRKQmSkIWmzDL05XgdVKmlmw/exec';
@@ -196,24 +195,27 @@
             [STATUS_OK]: { icon: 'fas fa-check-circle', class: 'status-ok' },
             [STATUS_FALHA]: { icon: 'fas fa-times-circle', class: 'status-falha' }
         };
-        const hideMap = { 'HF801': ['aht10', 'botao_central'], 'HF810': ['aht10', 'botao_central'], 'HF900': ['aht10', 'botao_central'], 'HF405': ['aht10', 'ntc', 'botao_central'], 'HF918': ['ntc'] };
-        const paletteColors = ['#A5D8FF', '#A7F3D0', '#FDE68A'];
+        const hideMap = { 
+            'HF801': ['aht10', 'botao_central'], 
+            'HF810': ['aht10', 'botao_central'], 
+            'HF900': ['aht10', 'botao_central'], 
+            'HF405': ['aht10', 'ntc', 'botao_central'], 
+            'HF918': ['ntc', 'tm1637'] 
+        };
         let estadoComponentes = {}, componentesParaExibir = [];
 
         // --- SELEÇÃO DE ELEMENTOS DOM ---
         const mainLoginScreen = document.getElementById('mainLoginScreen'), mainTesterNameInput = document.getElementById('mainTesterName'), mainLoginBtn = document.getElementById('mainLoginBtn'), loginErrorMessage = document.getElementById('loginErrorMessage');
-        const appContent = document.getElementById('app-content'), logoutBtn = document.getElementById('logoutBtn'), testerNameText = document.getElementById('testerNameText');
-        const form = document.getElementById('dataForm'), modeloSelect = document.getElementById('modelo'), clienteField = document.getElementById('clienteField'), clienteInput = document.getElementById('cliente'), componentesField = document.getElementById('componentesField'), componentsDiv = document.getElementById('components'), enviarBtn = document.getElementById('enviarBtn'), statusDiv = document.getElementById('status'), colorOptionsContainer = document.getElementById('colorOptionsContainer');
+        const appContent = document.getElementById('app-content'), testerNameText = document.getElementById('testerNameText'), backToMenuBtn = document.getElementById('backToMenuBtn');
+        const form = document.getElementById('dataForm'), modeloSelect = document.getElementById('modelo'), clienteField = document.getElementById('clienteField'), clienteInput = document.getElementById('cliente'), componentesField = document.getElementById('componentesField'), componentsDiv = document.getElementById('components'), enviarBtn = document.getElementById('enviarBtn'), statusDiv = document.getElementById('status');
         const confirmSendModal = document.getElementById('confirmSendModal'), observacaoTextarea = document.getElementById('observacao'), confirmSendBtn = document.getElementById('confirmSend'), cancelSendBtn = document.getElementById('cancelSend');
         const feedbackModal = document.getElementById('feedbackModal'), feedbackBtn = document.getElementById('feedbackBtn'), feedbackTypeSelect = document.getElementById('feedbackType'), feedbackDescriptionTextarea = document.getElementById('feedbackDescription'), submitFeedbackBtn = document.getElementById('submitFeedbackBtn'), cancelFeedbackBtn = document.getElementById('cancelFeedback'), feedbackStatusDiv = document.getElementById('feedbackStatus');
 
         // --- LÓGICA DE PERSISTÊNCIA E INICIALIZAÇÃO ---
         function checkLoginStatus() {
             const savedName = localStorage.getItem('testerName');
-            const savedColor = localStorage.getItem('testerColor');
             if (savedName) {
                 globalTesterName = savedName;
-                globalTesterColor = savedColor || paletteColors[0];
                 showApp();
             } else {
                 showLogin();
@@ -227,13 +229,10 @@
             if (name.length < 3) { loginErrorMessage.textContent = 'Por favor, digite um nome válido.'; return; }
             loginErrorMessage.textContent = '';
             localStorage.setItem('testerName', name);
-            if (!globalTesterColor) globalTesterColor = paletteColors[0];
-            localStorage.setItem('testerColor', globalTesterColor);
             globalTesterName = name;
             showApp();
         }
-        function handleLogout() { localStorage.removeItem('testerName'); localStorage.removeItem('testerColor'); window.location.reload(); }
-
+        
         // --- LÓGICA DO APP DE REGISTRO ---
         function initRecallApp() {
             if (recallAppInitialized) return;
@@ -252,28 +251,14 @@
 
             function showStatusMessage(element, message, type = 'success') {
                 element.textContent = message;
-                element.className = 'text-center my-2 p-2 rounded-md text-sm ';
-                element.classList.add(type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800');
+                element.className = 'text-center my-2 p-2 rounded-md text-sm';
+                if (type === 'success') {
+                    element.classList.add('bg-green-100', 'text-green-800');
+                } else {
+                    element.classList.add('bg-red-100', 'text-red-800');
+                }
             }
             function clearStatusMessage(element) { element.textContent = ''; element.className = 'text-center my-2'; }
-
-            function setupColorPicker() {
-                colorOptionsContainer.innerHTML = '';
-                paletteColors.forEach(color => {
-                    const option = document.createElement('div');
-                    option.className = 'color-option';
-                    option.style.backgroundColor = color;
-                    option.innerHTML = `<i class="fas fa-check"></i>`;
-                    if (color === globalTesterColor) option.classList.add('selected');
-                    option.addEventListener('click', () => {
-                        globalTesterColor = color;
-                        localStorage.setItem('testerColor', color);
-                        colorOptionsContainer.querySelector('.selected')?.classList.remove('selected');
-                        option.classList.add('selected');
-                    });
-                    colorOptionsContainer.appendChild(option);
-                });
-            }
 
             function gerarComponentesUI(modelo) {
                 componentsDiv.innerHTML = ''; 
@@ -282,7 +267,6 @@
 
                 const hideList = hideMap[modelo] || [];
                 
-                // FIX: Reverted to the original, more robust filtering logic
                 componentesParaExibir = componentesConfig.filter(comp => {
                     if (modelo === 'HF918' && comp.id === 'botao_central') {
                         return true; 
@@ -336,15 +320,33 @@
                 const detailsDiv = element.querySelector('.failure-details');
                 detailsDiv.classList.toggle('hidden', newStatus !== STATUS_FALHA);
             }
+            
+            function getTestColor() {
+                const statuses = componentesParaExibir.map(c => estadoComponentes[c.id].status);
+                
+                if (statuses.includes(STATUS_FALHA)) {
+                    return '#FEE2E2'; // Vermelho (Falha)
+                }
+                if (statuses.every(s => s === STATUS_OK)) {
+                    return '#A7F3D0'; // Verde (Tudo OK)
+                }
+                 if (statuses.some(s => s === STATUS_OK)) {
+                    return '#FDE68A'; // Amarelo (OK e N/A)
+                }
+                return '#F3F4F6'; // Cinza (Neutra, caso só tenha N/A)
+            }
+
 
             async function submitData() {
                 enviarBtn.disabled = true;
                 enviarBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
+                
+                const testColor = getTestColor();
 
                 const payload = {
                     action: 'create', data: new Date().toISOString(),
                     modelo: modeloSelect.value, cliente: clienteInput.value,
-                    nome_tester: globalTesterName, tester_color: globalTesterColor,
+                    nome_tester: globalTesterName, tester_color: testColor,
                     observacao: observacaoTextarea.value.trim()
                 };
 
@@ -353,7 +355,7 @@
                         const state = estadoComponentes[comp.id];
                         payload[comp.id] = state.status === STATUS_FALHA && state.obs.trim() ? `${STATUS_FALHA} (${state.obs.trim()})` : state.status;
                     } else {
-                        payload[comp.id] = STATUS_NA;
+                        payload[comp.id] = '-';
                     }
                 });
 
@@ -362,6 +364,7 @@
                     showStatusMessage(statusDiv, 'Dados enviados com sucesso!', 'success');
                     setTimeout(() => resetForm(), 2000);
                 } catch (err) {
+                    console.error("Erro no envio:", err);
                     showStatusMessage(statusDiv, 'Erro ao enviar. Verifique sua conexão.', 'error');
                 } finally {
                     enviarBtn.disabled = false;
@@ -428,15 +431,15 @@
             feedbackBtn.addEventListener('click', () => feedbackModal.classList.add('visible'));
             cancelFeedbackBtn.addEventListener('click', () => feedbackModal.classList.remove('visible'));
             submitFeedbackBtn.addEventListener('click', submitFeedback);
-
-            // Chamada de inicialização
-            setupColorPicker();
         }
         
         // --- INICIALIZAÇÃO E LISTENERS GLOBAIS ---
         mainLoginBtn.addEventListener('click', handleLogin);
         mainTesterNameInput.addEventListener('keypress', (e) => { if (e.key === "Enter") handleLogin(); });
-        logoutBtn.addEventListener('click', handleLogout);
+        
+        backToMenuBtn.addEventListener('click', () => {
+            window.close();
+        });
         
         checkLoginStatus(); // Ponto de entrada da aplicação
     });
