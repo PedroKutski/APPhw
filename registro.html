@@ -93,6 +93,169 @@
             transition: all 0.3s ease; z-index: 999; bottom: 30px; right: 30px; 
         }
         .feedback-btn:hover { transform: translateY(-5px) scale(1.1); box-shadow: 0 10px 20px rgba(0,0,0,0.2); background: #374151;}
+
+        /* --- Camera and Upload Specific Styles (merged and adapted) --- */
+        #cameraContainer {
+            display: none; /* Hidden by default */
+            max-width: 300px; /* Reduced size on larger screens */
+            width: 100%; /* Occupies 100% of available width in its container */
+            margin: 15px auto; /* Centered */
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        #cameraPreview {
+            width: 100%;
+            height: auto; /* Maintains video aspect ratio */
+            border: 2px solid #333;
+            border-radius: 8px;
+            display: block; /* Ensures video occupies full width */
+        }
+        #captureControls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+            padding-bottom: 10px;
+        }
+        #captureBtn, #cancelCameraBtn { 
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        #captureBtn { background-color: #4CAF50; color: white; } /* Green */
+        #captureBtn:hover { background-color: #45a049; transform: translateY(-2px); }
+        #cancelCameraBtn { background-color: #f44336; color: white; } /* Red */
+        #cancelCameraBtn:hover { background-color: #da190b; transform: translateY(-2px); }
+
+        #thumbnails {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+            justify-content: center;
+            width: 100%; /* Allows thumbnails to take full available width */
+            max-width: 600px; /* Limits width on very large screens */
+        }
+        .thumbnail {
+            position: relative;
+            width: 100px; /* Fixed size for thumbnails */
+            height: 100px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0; /* Prevents thumbnail from shrinking */
+        }
+        .thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 14px;
+            line-height: 24px;
+            text-align: center;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+        .remove-btn:hover { opacity: 1; }
+        .no-photos {
+            color: #777;
+            font-style: italic;
+            text-align: center;
+            width: 100%;
+        }
+        #photoLoadingMessage { 
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            width: 80%;
+            max-width: 500px;
+            word-wrap: break-word;
+            text-align: center;
+            display: none; /* Hidden by default */
+            font-weight: bold;
+            color: #2196F3;
+        }
+
+        /* Styles for animated confirmation */
+        #animatedConfirmation {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #4CAF50; /* Green for success */
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            visibility: hidden; /* Hidden by default, no animation */
+            z-index: 1000;
+        }
+
+        #animatedConfirmation.is-animating { /* New class to activate animation */
+            animation: fade-in-out 3s forwards;
+        }
+
+        #animatedConfirmation.error { background-color: #f44336; } /* Red for error */
+        #animatedConfirmation.warning { background-color: #ff9800; } /* Orange for warning */
+
+        #animatedConfirmation .icon { font-size: 48px; }
+
+        @keyframes fade-in-out {
+            0% { opacity: 0; visibility: hidden; transform: translate(-50%, -40%) scale(0.9); }
+            10% { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); }
+            90% { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; visibility: hidden; transform: translate(-50%, -60%) scale(0.9); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .main-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            .main-buttons button {
+                width: 80%; /* Buttons occupy more width on small screens */
+            }
+            #cameraContainer {
+                max-width: 90%; /* Camera container occupies more width on small screens */
+            }
+            .thumbnail {
+                width: 80px; /* Slightly smaller thumbnails on very small screens */
+                height: 80px;
+            }
+            #animatedConfirmation {
+                width: 80%;
+                padding: 15px 20px;
+            }
+            #animatedConfirmation .icon {
+                font-size: 36px;
+            }
+        }
     </style>
 </head>
 <body class="text-slate-800">
@@ -145,7 +308,11 @@
                 <form id="dataForm">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="field"><label for="modelo" class="font-semibold">Modelo do Dispositivo</label><select id="modelo" name="modelo" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"><option value="" disabled selected>Selecione o modelo</option><option value="HF801">HF801</option><option value="HF810">HF810</option><option value="HF900">HF900</option><option value="HF405">HF405</option><option value="HF918">HF918</option></select></div>
-                        <div class="field hidden" id="clienteField"><label for="cliente" class="font-semibold">Nome do Cliente</label><input type="text" id="cliente" name="cliente" placeholder="Ex: João Silva" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/></div>
+                        <div class="field hidden" id="clienteField">
+                            <!-- MODIFIED: Label now includes a span for the test ID -->
+                            <label for="cliente" class="font-semibold">Nome do Cliente <span id="testIdDisplay" class="text-slate-500 text-sm font-normal ml-2"></span></label>
+                            <input type="text" id="cliente" name="cliente" placeholder="Ex: João Silva" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
+                        </div>
                     </div>
                     <fieldset class="hidden" id="componentesField"><legend class="font-semibold text-lg text-slate-700 mt-6 mb-4 border-b pb-2">Status dos Componentes</legend><div id="components" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></fieldset>
                     <button type="submit" class="hidden w-full mt-8 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1" id="enviarBtn">
@@ -163,10 +330,46 @@
         <div class="modal-content">
             <h2 class="text-xl font-bold font-poppins text-slate-800"><i class="fas fa-question-circle text-blue-500 mr-2"></i>Confirmar Envio?</h2>
             <p class="text-slate-600">Revise os dados se necessário. Deseja prosseguir?</p>
-            <div class="field"><label for="observacao" class="font-semibold">Observação Geral (opcional)</label><textarea id="observacao" placeholder="Adicione qualquer observação relevante..." class="mt-1 block w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md"></textarea></div>
-            <div class="flex justify-end gap-4 mt-4"><button type="button" class="bg-slate-200 px-4 py-2 rounded-lg" id="cancelSend">Cancelar</button><button type="button" class="bg-blue-600 text-white px-4 py-2 rounded-lg" id="confirmSend">Confirmar</button></div>
+            
+            <div class="field mt-4">
+                <label for="observacao" class="font-semibold">Observação Geral (opcional)</label>
+                <textarea id="observacao" placeholder="Adicione qualquer observação relevante..." class="mt-1 block w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md"></textarea>
+            </div>
+
+            <!-- Camera/Photo Upload Section -->
+            <h3 class="text-lg font-semibold text-slate-700 mt-6 mb-2">Anexar Fotos:</h3>
+            <div class="flex flex-wrap gap-3 justify-center">
+                <button type="button" id="openCameraButton" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors duration-200 shadow-md">
+                    <i class="fas fa-camera mr-2"></i>Abrir Câmera
+                </button>
+                <!-- O botão 'Enviar Fotos Anexadas' foi removido, pois o envio será automático com o formulário principal. -->
+            </div>
+
+            <!-- Camera Container -->
+            <div id="cameraContainer" class="hidden my-4 max-w-sm mx-auto rounded-lg shadow-lg overflow-hidden border-2 border-gray-300">
+                <video id="cameraPreview" class="w-full h-auto block rounded-t-lg" playsinline></video>
+                <div id="captureControls" class="flex justify-center gap-3 p-3 bg-gray-100 rounded-b-lg">
+                    <button id="captureBtn" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors duration-200">Tirar Foto</button>
+                    <button id="cancelCameraBtn" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors duration-200">Cancelar</button>
+                </div>
+            </div>
+
+            <!-- Thumbnails Area -->
+            <h3 class="text-base font-semibold text-slate-700 mt-4">Fotos selecionadas:</h3>
+            <div id="thumbnails" class="flex flex-wrap gap-3 justify-center mt-2 p-2 bg-white rounded-md border border-gray-200 min-h-[100px] items-center">
+                <span class="no-photos text-slate-500 italic">Nenhuma foto selecionada ainda</span>
+            </div>
+
+            <!-- Loading Message for Photo Upload -->
+            <div id="photoLoadingMessage" class="hidden mt-4 p-3 bg-blue-100 text-blue-800 rounded-lg text-center font-semibold">Enviando fotos... Por favor, aguarde.</div>
+
+            <div class="flex justify-end gap-4 mt-6">
+                <button type="button" class="bg-slate-200 px-4 py-2 rounded-lg text-slate-700 hover:bg-slate-300 transition-colors" id="cancelSend">Cancelar</button>
+                <button type="button" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" id="confirmSend">Confirmar</button>
+            </div>
         </div>
     </div>
+
     <div class="modal" id="feedbackModal">
         <div class="modal-content">
             <h2 class="text-xl font-bold font-poppins text-slate-800"><i class="fas fa-bullhorn text-amber-500 mr-2"></i>Enviar Feedback</h2>
@@ -178,13 +381,23 @@
         </div>
     </div>
 
+    <!-- Animated Confirmation (outside modals, fixed position) -->
+    <div id="animatedConfirmation">
+        <span class="icon"></span>
+        <p class="message"></p>
+    </div>
+
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- ESTADO E CONFIGURAÇÃO ---
         let globalTesterName = '';
         let recallAppInitialized = false;
+        let currentTestId = null; // Variável para armazenar o ID único do teste atual
 
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyE4h4LL3vk8n0m2A0C3p3n6Plz9w9YV0Ip_N8CpBpIk9VRKQmSkIWmzDL05XgdVKmlmw/exec';
+        // URL para o Google Apps Script de upload de fotos. Certifique-se de que este script esteja ativo e configurado corretamente.
+        const PHOTO_UPLOAD_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyon32vtTfnuG0DcdLiRJb5TK9fPzVHcOnULufkyV9lEWNIFBhz-oyAgCNjY6gBtoJf/exec";
+
         const componentesConfig = [ 
             { id: 'aht10', label: 'AHT10' }, { id: 'botao_esquerdo', label: 'Botão Esquerdo' }, { id: 'botao_central', label: 'Botão Central' }, 
             { id: 'botao_direito', label: 'Botão Direito' }, { id: 'botao_reset', label: 'Botão Reset' }, { id: 'certificado', label: 'Certificado' }, 
@@ -208,12 +421,28 @@
         };
         let estadoComponentes = {}, componentesParaExibir = [];
 
+        // --- Variáveis Globais da Câmera e Upload ---
+        let cameraStream = null; 
+        let filesToUpload = [];
+
         // --- SELEÇÃO DE ELEMENTOS DOM ---
         const mainLoginScreen = document.getElementById('mainLoginScreen'), mainTesterNameInput = document.getElementById('mainTesterName'), mainLoginBtn = document.getElementById('mainLoginBtn'), loginErrorMessage = document.getElementById('loginErrorMessage');
         const appContent = document.getElementById('app-content'), testerNameText = document.getElementById('testerNameText'), backToMenuBtn = document.getElementById('backToMenuBtn'), logoutBtn = document.getElementById('logoutBtn');
         const form = document.getElementById('dataForm'), modeloSelect = document.getElementById('modelo'), clienteField = document.getElementById('clienteField'), clienteInput = document.getElementById('cliente'), componentesField = document.getElementById('componentesField'), componentsDiv = document.getElementById('components'), enviarBtn = document.getElementById('enviarBtn'), statusDiv = document.getElementById('status');
         const confirmSendModal = document.getElementById('confirmSendModal'), observacaoTextarea = document.getElementById('observacao'), confirmSendBtn = document.getElementById('confirmSend'), cancelSendBtn = document.getElementById('cancelSend');
         const feedbackModal = document.getElementById('feedbackModal'), feedbackBtn = document.getElementById('feedbackBtn'), feedbackTypeSelect = document.getElementById('feedbackType'), feedbackDescriptionTextarea = document.getElementById('feedbackDescription'), submitFeedbackBtn = document.getElementById('submitFeedbackBtn'), cancelFeedbackBtn = document.getElementById('cancelFeedback'), feedbackStatusDiv = document.getElementById('feedbackStatus');
+
+        // Elementos DOM da Câmera e Upload
+        const openCameraButton = document.getElementById('openCameraButton');
+        // O botão 'uploadAttachedPhotosBtn' foi removido do HTML e sua lógica integrada ao submitData.
+        const cameraContainer = document.getElementById('cameraContainer');
+        const cameraPreview = document.getElementById('cameraPreview');
+        const captureBtn = document.getElementById('captureBtn');
+        const cancelCameraBtn = document.getElementById('cancelCameraBtn'); 
+        const thumbnailsContainer = document.getElementById('thumbnails');
+        const photoLoadingMessageDiv = document.getElementById('photoLoadingMessage'); 
+        const animatedConfirmationDiv = document.getElementById('animatedConfirmation');
+        const testIdDisplay = document.getElementById('testIdDisplay'); // Elemento para exibir o ID
 
         // --- LÓGICA DE PERSISTÊNCIA E INICIALIZAÇÃO ---
         function checkLoginStatus() {
@@ -226,8 +455,18 @@
             }
         }
         
-        function showLogin() { mainLoginScreen.classList.remove('hidden-auth'); appContent.classList.add('hidden'); mainTesterNameInput.focus(); mainTesterNameInput.value = '';}
-        function showApp() { mainLoginScreen.classList.add('hidden-auth'); appContent.classList.remove('hidden'); if (!recallAppInitialized) initRecallApp(); testerNameText.textContent = globalTesterName; }
+        function showLogin() { 
+            mainLoginScreen.classList.remove('hidden-auth'); 
+            appContent.classList.add('hidden'); 
+            mainTesterNameInput.focus(); 
+            mainTesterNameInput.value = '';
+        }
+        function showApp() { 
+            mainLoginScreen.classList.add('hidden-auth'); 
+            appContent.classList.remove('hidden'); 
+            if (!recallAppInitialized) initRecallApp(); 
+            testerNameText.textContent = globalTesterName; 
+        }
         
         function handleLogin() {
             const name = mainTesterNameInput.value.trim();
@@ -255,27 +494,47 @@
             // --- Event Listeners do App ---
             modeloSelect.addEventListener('change', () => {
                 const modelo = modeloSelect.value;
-                clienteInput.value = '';
+                clienteInput.value = ''; // Limpa o campo cliente ao mudar o modelo
+                testIdDisplay.textContent = ''; // Limpa o ID antigo
                 if (modelo) {
                     clienteField.classList.remove('hidden');
                     componentesField.classList.remove('hidden');
                     enviarBtn.classList.remove('hidden');
                     clienteInput.focus();
+                    generateAndDisplayTestId(); // Gera e exibe o ID quando o modelo é selecionado
                 } else {
-                   resetForm();
+                    resetForm();
                 }
                 clearStatusMessage(statusDiv);
                 gerarComponentesUI(modelo);
             });
 
+            // Adiciona um listener para o campo cliente para gerar o ID apenas quando o nome do cliente for digitado
+            clienteInput.addEventListener('input', () => {
+                if (modeloSelect.value && clienteInput.value.trim() && !currentTestId) {
+                    generateAndDisplayTestId();
+                } else if (!clienteInput.value.trim() && currentTestId) {
+                    // Limpa o ID se o nome do cliente for apagado
+                    currentTestId = null;
+                    testIdDisplay.textContent = '';
+                }
+            });
+
+
             form.addEventListener('submit', (e) => {
                 e.preventDefault(); clearStatusMessage(statusDiv);
-                if (!modeloSelect.value) { showStatusMessage(statusDiv, 'Selecione um modelo.', 'error'); return; }
-                if (!clienteInput.value.trim()) { showStatusMessage(statusDiv, 'Informe o nome do cliente.', 'error'); return; }
+                if (!modeloSelect.value) { showAnimatedConfirmation('Selecione um modelo.', 'error'); return; }
+                if (!clienteInput.value.trim()) { showAnimatedConfirmation('Informe o nome do cliente.', 'error'); return; }
+                // Garante que o ID foi gerado antes de prosseguir para o modal
+                if (!currentTestId) { 
+                    generateAndDisplayTestId(); 
+                    showAnimatedConfirmation('ID do teste gerado. Por favor, confirme o envio.', 'warning');
+                    // Não retorna, permite que o modal abra para confirmar o envio
+                }
 
                 const unmarked = componentesParaExibir.find(comp => estadoComponentes[comp.id]?.status === STATUS_NA);
                 if (unmarked) {
-                    showStatusMessage(statusDiv, `Verifique o status de "${unmarked.label}".`, 'error');
+                    showAnimatedConfirmation(`Verifique o status de "${unmarked.label}".`, 'warning');
                     const element = document.querySelector(`.component[data-component-id="${unmarked.id}"]`);
                     element?.classList.add('unmarked-highlight');
                     setTimeout(() => element?.classList.remove('unmarked-highlight'), 2500);
@@ -290,6 +549,26 @@
             feedbackBtn.addEventListener('click', () => feedbackModal.classList.add('visible'));
             cancelFeedbackBtn.addEventListener('click', () => feedbackModal.classList.remove('visible'));
             submitFeedbackBtn.addEventListener('click', submitFeedback);
+
+            // Listeners da Câmera/Upload
+            openCameraButton.addEventListener('click', () => openCamera('environment'));
+            captureBtn.addEventListener('click', capturePhoto);
+            cancelCameraBtn.addEventListener('click', closeCamera);
+            // uploadAttachedPhotosBtn.addEventListener('click', uploadPhotos); // Este botão foi removido, a função é chamada dentro de submitData
+        }
+
+        /**
+         * Gera um ID único para o teste no formato (Letra + 4 Dígitos) e o exibe.
+         * Note: Esta geração de ID é client-side e não verifica duplicidade em tempo real na planilha.
+         * Para uma garantia de unicidade robusta, seria necessária uma verificação no Google Apps Script antes do envio dos dados.
+         */
+        function generateAndDisplayTestId() {
+            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const randomLetter = letters.charAt(Math.floor(Math.random() * letters.length));
+            const randomDigits = Math.floor(1000 + Math.random() * 9000); // Gera um número de 4 dígitos
+            currentTestId = `(${randomLetter}${randomDigits})`;
+            testIdDisplay.textContent = currentTestId;
+            console.log("ID do Teste gerado:", currentTestId);
         }
 
         function resetForm() {
@@ -301,6 +580,12 @@
             estadoComponentes = {};
             componentesParaExibir = [];
             clearStatusMessage(statusDiv);
+            // Redefine estados relacionados à foto e ID
+            filesToUpload = [];
+            updateThumbnails(); // Limpa as miniaturas
+            closeCamera(); // Garante que a câmera esteja desligada
+            currentTestId = null;
+            testIdDisplay.textContent = ''; // Limpa a exibição do ID
         }
 
         function showStatusMessage(element, message, type = 'success') {
@@ -396,12 +681,40 @@
             enviarBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
             
             const testColor = getTestColor();
+            let photoUploadSuccess = true; // Assume sucesso inicialmente
+            let combinedClienteName = clienteInput.value.trim(); // Nome do cliente original
+            let combinedMessage = 'Dados enviados com sucesso!';
+            let combinedMessageType = 'success';
+
+            // 1. Enviar fotos primeiro
+            if (filesToUpload.length > 0) {
+                console.log("Chamando uploadPhotos() antes de enviar dados do formulário.");
+                const uploadResult = await uploadPhotos(); // Chamar a função de upload e obter o resultado
+                if (!uploadResult) { // Se o upload de fotos falhou
+                    photoUploadSuccess = false;
+                    combinedMessage = 'Dados do formulário enviados, mas houve falha no upload de ALGUMAS fotos.';
+                    combinedMessageType = 'warning'; // Define como aviso, já que os dados podem ter ido
+                } else {
+                    combinedMessage = 'Dados e fotos enviados com sucesso!';
+                }
+            } else {
+                console.log("Nenhuma foto para enviar.");
+            }
+
+            // 2. Prepara o payload do formulário principal com o ID no nome do cliente
+            if (currentTestId && clienteInput.value.trim()) {
+                combinedClienteName = `${currentTestId} ${clienteInput.value.trim()}`;
+            }
 
             const payload = {
-                action: 'create', data: new Date().toISOString(),
-                modelo: modeloSelect.value, cliente: clienteInput.value,
-                nome_tester: globalTesterName, tester_color: testColor,
-                observacao: observacaoTextarea.value.trim()
+                action: 'create',
+                data: new Date().toISOString(),
+                modelo: modeloSelect.value,
+                cliente: combinedClienteName, // Cliente com ID prefixado
+                nome_tester: globalTesterName,
+                tester_color: testColor,
+                observacao: observacaoTextarea.value.trim(),
+                test_id: currentTestId // Mantém o ID separado se precisar no script da planilha também
             };
 
             componentesConfig.forEach(comp => {
@@ -413,23 +726,27 @@
                 }
             });
 
+            // 3. Enviar dados do formulário
             try {
                 await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-                showStatusMessage(statusDiv, 'Dados enviados com sucesso!', 'success');
-                setTimeout(() => resetForm(), 2000);
+                // showAnimatedConfirmation('Dados enviados com sucesso!', 'success'); // Já tratado na mensagem combinada
             } catch (err) {
-                console.error("Erro no envio:", err);
-                showStatusMessage(statusDiv, 'Erro ao enviar. Verifique sua conexão.', 'error');
+                console.error("Erro no envio de dados do formulário:", err);
+                combinedMessage = 'Erro crítico ao enviar dados do formulário. Verifique sua conexão. (Fotos: ' + (photoUploadSuccess ? 'Sucesso' : 'Falha') + ')';
+                combinedMessageType = 'error';
             } finally {
+                // Exibe a confirmação animada final com base no resultado combinado
+                showAnimatedConfirmation(combinedMessage, combinedMessageType);
                 enviarBtn.disabled = false;
                 enviarBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Enviar Teste';
+                setTimeout(() => resetForm(), 2000); // Reseta o formulário após 2 segundos
             }
         }
         
         async function submitFeedback() {
             const type = feedbackTypeSelect.value;
             const description = feedbackDescriptionTextarea.value.trim();
-            if (!description) { showStatusMessage(feedbackStatusDiv, 'Por favor, descreva seu feedback.', 'error'); return; }
+            if (!description) { showAnimatedConfirmation('Por favor, descreva seu feedback.', 'error'); return; }
 
             submitFeedbackBtn.disabled = true;
             submitFeedbackBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
@@ -437,14 +754,296 @@
             try {
                 const payload = { action: 'submitFeedback', timestamp: new Date().toISOString(), nome_tester: globalTesterName, tipo: type, descricao: description };
                 await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-                showStatusMessage(feedbackStatusDiv, 'Feedback enviado com sucesso!', 'success');
+                showAnimatedConfirmation('Feedback enviado com sucesso!', 'success');
                 setTimeout(() => { feedbackModal.classList.remove('visible'); feedbackDescriptionTextarea.value = ''; clearStatusMessage(feedbackStatusDiv); }, 2000);
             } catch (error) {
-                showStatusMessage(feedbackStatusDiv, 'Falha ao enviar feedback.', 'error');
+                showAnimatedConfirmation('Falha ao enviar feedback.', 'error');
             } finally {
                 submitFeedbackBtn.disabled = false;
                 submitFeedbackBtn.innerHTML = 'Enviar';
             }
+        }
+
+        // --- Funções da Câmera e Upload ---
+
+        /**
+         * Abre a câmera e inicia a transmissão para o elemento de vídeo.
+         * @param {string} facingMode - 'user' para câmera frontal, 'environment' para câmera traseira.
+         */
+        function openCamera(facingMode) {
+            console.log("Tentando abrir a câmera...");
+            const constraints = {
+                video: {
+                    facingMode: facingMode,
+                    width: { ideal: 640 },  // Resolução ideal para captura
+                    height: { ideal: 480 }
+                },
+                audio: false
+            };
+            
+            // Garante que o contêiner da câmera esteja visível
+            cameraContainer.style.display = 'block';
+
+            // Obtém o stream da câmera
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(function(s) {
+                    cameraStream = s;
+                    cameraPreview.srcObject = cameraStream;
+                    cameraPreview.play();
+                    console.log("Câmera aberta com sucesso e stream iniciado.");
+                })
+                .catch(function(err) {
+                    console.error("Erro ao acessar a câmera: ", err);
+                    let errorMessage = "Não foi possível acessar a câmera.";
+
+                    if (err.name === "NotAllowedError") {
+                        errorMessage += " Permissão negada. Certifique-se de que o navegador e o sistema operacional permitem o acesso à câmera.";
+                    } else if (err.name === "NotFoundError") {
+                        errorMessage += " Nenhuma câmera encontrada ou conectada.";
+                    } else if (err.name === "NotReadableError") {
+                        errorMessage += " A câmera está sendo usada por outro aplicativo ou está indisponível.";
+                    } else if (err.name === "OverconstrainedError") {
+                        errorMessage += " As configurações da câmera solicitadas não são suportadas pelo seu dispositivo.";
+                    } else if (err.name === "AbortError") {
+                        errorMessage += " A operação da câmera foi abortada.";
+                    } else if (err.name === "SecurityError") {
+                        errorMessage += " O acesso à câmera foi bloqueado por questões de segurança (ex: site não é HTTPS).";
+                    } else {
+                        errorMessage += " Erro desconhecido: " + err.message;
+                    }
+                    
+                    showAnimatedConfirmation(errorMessage, 'error');
+                    closeCamera(); // Fecha a câmera se houver erro
+                });
+        }
+
+        /**
+         * Para o stream da câmera e esconde o contêiner da câmera.
+         */
+        function closeCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            cameraContainer.style.display = 'none'; // Garante que o contêiner esteja oculto
+            cameraPreview.srcObject = null;
+            console.log("Câmera fechada.");
+        }
+
+        /**
+         * Captura uma foto do stream da câmera e a adiciona à lista de upload.
+         */
+        function capturePhoto() {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            // Ajusta as proporções para a visualização
+            canvas.width = cameraPreview.videoWidth;
+            canvas.height = cameraPreview.videoHeight;
+            context.drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
+            
+            // Converte para blob e cria um objeto File
+            canvas.toBlob(function(blob) {
+                const fileName = 'foto_' + new Date().getTime() + '.jpg';
+                const file = new File([blob], fileName, {
+                    type: 'image/jpeg',
+                    lastModified: Date.now()
+                });
+                
+                // Adiciona à lista de upload
+                addFileToUpload(file);
+                
+                // Fecha a câmera após a captura
+                closeCamera();
+                showAnimatedConfirmation("Foto capturada com sucesso!", 'success');
+            }, 'image/jpeg', 0.85);  // Qualidade da imagem
+        }
+
+        /**
+         * Adiciona um arquivo à lista de arquivos para upload e atualiza as miniaturas.
+         * @param {File} file - O objeto File a ser adicionado.
+         */
+        function addFileToUpload(file) {
+            filesToUpload.push(file);
+            updateThumbnails();
+            
+            // Remove a classe 'no-photos' se for a primeira adição
+            if (thumbnailsContainer.classList.contains('no-photos')) {
+                thumbnailsContainer.classList.remove('no-photos');
+                thumbnailsContainer.innerHTML = '';
+            }
+            console.log(`Foto "${file.name}" adicionada. Total: ${filesToUpload.length}`);
+        }
+
+        /**
+         * Remove um arquivo da lista de upload pelo índice e atualiza as miniaturas.
+         * @param {number} index - O índice do arquivo a ser removido.
+         */
+        function removeFile(index) {
+            const removedFileName = filesToUpload[index].name;
+            filesToUpload.splice(index, 1);
+            updateThumbnails();
+            
+            // Mostra mensagem se não houver mais fotos
+            if (filesToUpload.length === 0) {
+                thumbnailsContainer.innerHTML = '<span class="no-photos text-slate-500 italic">Nenhuma foto selecionada ainda</span>';
+                thumbnailsContainer.classList.add('no-photos');
+            }
+            console.log(`Foto "${removedFileName}" removida. Restantes: ${filesToUpload.length}`);
+        }
+
+        /**
+         * Atualiza a área de exibição de miniaturas com base no array `filesToUpload`.
+         */
+        function updateThumbnails() {
+            // Limpa as miniaturas existentes, mas preserva a mensagem "no-photos" se aplicável
+            if (!thumbnailsContainer.classList.contains('no-photos')) {
+                thumbnailsContainer.innerHTML = '';
+            } else {
+                thumbnailsContainer.innerHTML = '<span class="no-photos text-slate-500 italic">Nenhuma foto selecionada ainda</span>';
+            }
+            
+            // Cria as miniaturas apenas se houver arquivos
+            if (filesToUpload.length > 0) {
+                thumbnailsContainer.classList.remove('no-photos'); // Remove a classe se tiver fotos
+                thumbnailsContainer.innerHTML = ''; // Limpa antes de adicionar novas miniaturas
+                filesToUpload.forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const thumbnailDiv = document.createElement('div');
+                        thumbnailDiv.className = 'thumbnail';
+                        
+                        thumbnailDiv.innerHTML = `
+                            <img src="${e.target.result}" alt="${file.name}">
+                            <button class="remove-btn" onclick="removeFile(${index})" title="Remover foto">×</button>
+                        `;
+                        
+                        thumbnailsContainer.appendChild(thumbnailDiv);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        }
+
+        /**
+         * Envia todas as fotos selecionadas para o Google Drive através de um Google Apps Script separado.
+         * Retorna true se todos os uploads foram bem-sucedidos, false caso contrário.
+         */
+        async function uploadPhotos() { 
+            if (filesToUpload.length === 0) {
+                console.log("Nenhuma foto para upload.");
+                return true; // Considera sucesso se não houver fotos para enviar
+            }
+
+            if (!currentTestId) {
+                showAnimatedConfirmation("Um ID de teste não foi gerado para associar as fotos. Aborte o envio e gere um ID.", 'error');
+                return false; // Falha se não há ID para associar as fotos
+            }
+
+            const clienteNameForFilename = clienteInput.value.trim().replace(/[^a-zA-Z0-9_]/g, ''); // Limpa o nome do cliente para usar no filename
+            if (!clienteNameForFilename) {
+                 showAnimatedConfirmation("Por favor, digite o nome do cliente antes de enviar as fotos.", 'warning');
+                 return false;
+            }
+
+            photoLoadingMessageDiv.style.display = 'block'; // Exibe a mensagem de carregamento para as fotos
+            
+            let allPhotosUploadedSuccessfully = true;
+            let successfulUploadsCount = 0;
+            let failedUploadsCount = 0;
+
+            for (let i = 0; i < filesToUpload.length; i++) {
+                const file = filesToUpload[i];
+                console.log(`Iniciando upload de: ${file.name}`);
+
+                const base64 = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result.split(',')[1]);
+                    reader.onerror = () => reject("Erro ao ler arquivo: " + file.name);
+                    reader.readAsDataURL(file);
+                });
+
+                const formData = new FormData();
+                formData.append("filedata", base64);
+                // Pré-fixa o nome do arquivo com o ID do teste E o nome do cliente
+                formData.append("filename", `${currentTestId}_${clienteNameForFilename}_${file.name}`); 
+                formData.append("mimeType", file.type);
+                
+                try {
+                    const response = await fetch(PHOTO_UPLOAD_SCRIPT_URL, {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    const result = await response.text();
+                    if (result.includes("sucesso")) { // Assumindo que o Google Script retorna "sucesso" em caso de sucesso
+                        successfulUploadsCount++;
+                        console.log(`Upload de ${file.name} bem-sucedido.`);
+                    } else {
+                        allPhotosUploadedSuccessfully = false;
+                        failedUploadsCount++;
+                        console.error(`Erro ao enviar ${file.name}: ${result}`);
+                    }
+                } catch (error) {
+                    allPhotosUploadedSuccessfully = false;
+                    failedUploadsCount++;
+                    console.error(`Erro na requisição de upload de ${file.name}: ${error.message}`);
+                }
+            }
+            
+            photoLoadingMessageDiv.style.display = 'none'; // Oculta a mensagem de carregamento
+
+            // Exibe a confirmação animada para o upload das fotos separadamente.
+            // A mensagem final do formulário principal será agregada.
+            if (allPhotosUploadedSuccessfully) {
+                showAnimatedConfirmation(`Upload de fotos: ${successfulUploadsCount} enviadas.`, 'success');
+            } else {
+                showAnimatedConfirmation(`Upload de fotos: ${successfulUploadsCount} sucesso, ${failedUploadsCount} falha.`, 'warning');
+            }
+            
+            // Limpa após o envio das fotos
+            filesToUpload = [];
+            updateThumbnails(); 
+
+            return allPhotosUploadedSuccessfully; // Retorna o status do upload das fotos
+        }
+
+        /**
+         * Mostra uma mensagem de confirmação animada.
+         * @param {string} message - A mensagem a ser exibida.
+         * @param {'success'|'error'|'warning'} type - O tipo da mensagem (determina cor e ícone).
+         */
+        function showAnimatedConfirmation(message, type) {
+            const iconSpan = animatedConfirmationDiv.querySelector('.icon');
+            const messageP = animatedConfirmationDiv.querySelector('.message');
+
+            // Limpa classes anteriores e define o tipo
+            animatedConfirmationDiv.classList.remove('success', 'error', 'warning', 'is-animating');
+            animatedConfirmationDiv.classList.add(type);
+
+            // Define o ícone e a mensagem
+            if (type === 'success') {
+                iconSpan.innerHTML = '&#10003;'; // Símbolo de verificação
+            } else if (type === 'error') {
+                iconSpan.innerHTML = '&#10007;'; // Símbolo X
+            } else if (type === 'warning') {
+                iconSpan.innerHTML = '&#9888;'; // Símbolo de aviso
+            }
+            messageP.textContent = message;
+
+            // Garante que o elemento está visível e opaco antes de adicionar a animação
+            animatedConfirmationDiv.style.opacity = 1;
+            animatedConfirmationDiv.style.visibility = 'visible';
+            
+            // Adiciona a classe que dispara a animação
+            animatedConfirmationDiv.classList.add('is-animating');
+
+            // Oculta o elemento após a duração da animação
+            setTimeout(() => {
+                animatedConfirmationDiv.classList.remove('is-animating'); // Remove a classe de animação
+                animatedConfirmationDiv.style.opacity = 0;
+                animatedConfirmationDiv.style.visibility = 'hidden';
+            }, 3000); // Duração da animação
         }
         
         // --- INICIALIZAÇÃO E LISTENERS GLOBAIS ---
@@ -453,10 +1052,11 @@
         logoutBtn.addEventListener('click', handleLogout);
         
         backToMenuBtn.addEventListener('click', () => {
-            window.close();
+            window.close(); // Fecha a janela/aba atual
         });
         
         checkLoginStatus(); // Ponto de entrada da aplicação
+        updateThumbnails(); // Inicializa a área de miniaturas com a mensagem padrão
     });
     </script>
 </body>
