@@ -258,7 +258,7 @@
         }
     </style>
 </head>
-<body class="text-slate-800">
+<body>
 
     <!-- Tela de Login/Identificação (Inicialmente visível) -->
     <div id="mainLoginScreen">
@@ -382,6 +382,19 @@
         </div>
     </div>
 
+    <!-- NEW MODAL for N/A confirmation -->
+    <div class="modal" id="naConfirmationModal">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold font-poppins text-red-500"><i class="fas fa-exclamation-triangle mr-2"></i>Atenção!</h2>
+            <p class="text-slate-600">Você tem certeza que deseja enviar o teste com componentes **não avaliados (N/A)**?</p>
+            <div class="flex justify-end gap-4 mt-4">
+                <button type="button" class="bg-slate-200 px-4 py-2 rounded-lg text-slate-700 hover:bg-slate-300 transition-colors" id="cancelNaSend">Cancelar</button>
+                <button type="button" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors" id="confirmNaSend">Enviar Assim Mesmo</button>
+            </div>
+        </div>
+    </div>
+
+
     <!-- Animated Confirmation (outside modals, fixed position) -->
     <div id="animatedConfirmation">
         <span class="icon"></span>
@@ -394,6 +407,8 @@
         let globalTesterName = '';
         let recallAppInitialized = false;
         let currentTestId = null; // Variável para armazenar o ID único do teste atual
+        let longPressTimer = null; // Timer para a detecção de long press
+        const LONG_PRESS_THRESHOLD = 5000; // Milissegundos para considerar um long press (5 segundos)
 
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyE4h4LL3vk8n0m2A0C3p3n6Plz9w9YV0Ip_N8CpBpIk9VRKQmSkIWmzDL05XgdVKmlmw/exec';
         // URL para o Google Apps Script de upload de fotos. Certifique-se de que este script esteja ativo e configurado corretamente.
@@ -442,8 +457,13 @@
         const thumbnailsContainer = document.getElementById('thumbnails');
         const photoLoadingMessageDiv = document.getElementById('photoLoadingMessage'); 
         const animatedConfirmationDiv = document.getElementById('animatedConfirmation');
-        // NEW: testIdDisplay agora está no header ao lado do nome do testador
+        // testIdDisplay agora está no header ao lado do nome do testador
         const testIdDisplay = document.getElementById('testIdDisplay'); 
+
+        // NEW: Elementos do modal de confirmação de N/A
+        const naConfirmationModal = document.getElementById('naConfirmationModal');
+        const confirmNaSendBtn = document.getElementById('confirmNaSend');
+        const cancelNaSendBtn = document.getElementById('cancelNaSend');
 
         // --- LÓGICA DE PERSISTÊNCIA E INICIALIZAÇÃO ---
         function checkLoginStatus() {
@@ -531,28 +551,70 @@
                 e.preventDefault(); clearStatusMessage(statusDiv);
                 if (!modeloSelect.value) { showAnimatedConfirmation('Selecione um modelo.', 'error'); return; }
                 if (!clienteInput.value.trim()) { showAnimatedConfirmation('Informe o nome do cliente.', 'error'); return; }
-                // Garante que o ID foi gerado antes de prosseguir para o modal
+                
+                // Garante que o ID foi gerado antes de prosseguir
                 if (!currentTestId) { 
                     generateAndDisplayTestId(); 
-                    showAnimatedConfirmation('ID do teste gerado. Por favor, confirme o envio.', 'warning');
-                    // Não retorna, permite que o modal abra para confirmar o envio
+                    showAnimatedConfirmation('ID do teste gerado. Por favor, tente enviar novamente.', 'warning');
+                    return; // Retorna para que o usuário possa rever
                 }
 
                 const unmarked = componentesParaExibir.find(comp => estadoComponentes[comp.id]?.status === STATUS_NA);
                 if (unmarked) {
-                    showAnimatedConfirmation(`Verifique o status de "${unmarked.label}".`, 'warning');
-                    const element = document.querySelector(`.component[data-component-id="${unmarked.id}"]`);
-                    element?.classList.add('unmarked-highlight');
-                    setTimeout(() => element?.classList.remove('unmarked-highlight'), 2500);
-                    return;
+                    // Se houver componentes N/A, mostra o novo modal de confirmação de N/A
+                    naConfirmationModal.classList.add('visible');
+                    // Não prossegue para confirmSendModal ainda, espera a decisão do usuário no naConfirmationModal
+                } else {
+                    // Se não houver componentes N/A, prossegue para o modal de confirmação principal
+                    confirmSendModal.classList.add('visible');
                 }
-                confirmSendModal.classList.add('visible');
             });
             
             // Listeners dos Modais
             confirmSendBtn.addEventListener('click', () => { confirmSendModal.classList.remove('visible'); submitData(); });
             cancelSendBtn.addEventListener('click', () => confirmSendModal.classList.remove('visible'));
-            feedbackBtn.addEventListener('click', () => feedbackModal.classList.add('visible'));
+            
+            // NEW: Listeners para o modal de confirmação de N/A
+            confirmNaSendBtn.addEventListener('click', () => {
+                naConfirmationModal.classList.remove('visible'); // Esconde o modal de N/A
+                confirmSendModal.classList.add('visible');      // Mostra o modal de confirmação principal
+            });
+            cancelNaSendBtn.addEventListener('click', () => {
+                naConfirmationModal.classList.remove('visible'); // Esconde o modal de N/A
+                // O usuário optou por não enviar com N/A, então não faz mais nada.
+            });
+
+            // Long-press event listeners for feedbackBtn
+            feedbackBtn.addEventListener('mousedown', (e) => {
+                // Only trigger long press for left mouse button
+                if (e.button === 0) { 
+                    longPressTimer = setTimeout(() => {
+                        setAllComponentsToOK();
+                        longPressTimer = null; // Clear the timer as it has fired
+                    }, LONG_PRESS_THRESHOLD);
+                }
+            });
+
+            feedbackBtn.addEventListener('mouseup', () => {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            });
+
+            feedbackBtn.addEventListener('mouseleave', () => {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            });
+
+            feedbackBtn.addEventListener('click', () => {
+                // If longPressTimer is still active, it means it was a short click, so open modal
+                if (longPressTimer) {
+                    feedbackModal.classList.add('visible');
+                }
+                clearTimeout(longPressTimer); // Ensure timer is cleared on click as well
+                longPressTimer = null;
+            });
+
+
             cancelFeedbackBtn.addEventListener('click', () => feedbackModal.classList.remove('visible'));
             submitFeedbackBtn.addEventListener('click', submitFeedback);
 
@@ -575,6 +637,30 @@
             testIdDisplay.textContent = currentTestId; // Exibe no elemento testIdDisplay no header
             console.log("ID do Teste gerado:", currentTestId);
         }
+
+        /**
+         * Sets the status of all visible components to 'OK'.
+         */
+        function setAllComponentsToOK() {
+            console.log("Long press detectado: Definindo todos os componentes como OK.");
+            document.querySelectorAll('.component').forEach(componentDiv => {
+                const componentId = componentDiv.dataset.componentId;
+                // Only change if the component is actually part of the displayed components
+                if (componentesParaExibir.some(c => c.id === componentId)) {
+                    // Update state
+                    estadoComponentes[componentId].status = STATUS_OK;
+                    estadoComponentes[componentId].obs = ''; // Clear any observations if setting to OK
+
+                    // Update UI
+                    componentDiv.className = `component ${statusInfo[STATUS_OK].class}`;
+                    componentDiv.querySelector('.icon').className = `icon ${statusInfo[STATUS_OK].icon}`;
+                    componentDiv.querySelector('.failure-details').classList.add('hidden'); // Hide details
+                    componentDiv.querySelector('textarea').value = ''; // Clear textarea content
+                }
+            });
+            showAnimatedConfirmation("Todos os componentes marcados como OK!", 'success');
+        }
+
 
         function resetForm() {
             form.reset();
@@ -729,7 +815,9 @@
             // 3. Enviar dados do formulário
             try {
                 await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            } catch (err) {
+            }
+            // Use o mesmo immersive id as in the context
+            catch (err) {
                 console.error("Erro no envio de dados do formulário:", err);
                 combinedMessage = 'Erro crítico ao enviar dados do formulário. Verifique sua conexão. (Fotos: ' + (photoUploadSuccess ? 'Sucesso' : 'Falha') + ')';
                 combinedMessageType = 'error';
@@ -935,14 +1023,16 @@
             }
 
             if (!currentTestId) {
-                showAnimatedConfirmation("Um ID de teste não foi gerado para associar as fotos. Aborte o envio e gere um ID.", 'error');
+                // Não mostra confirmação animada aqui, pois a principal tratará o caso.
+                console.error("Erro: Um ID de teste não foi gerado para associar as fotos.");
                 return false; // Falha se não há ID para associar as fotos
             }
 
             // O nome do cliente é usado no filename, certifique-se de que ele esteja preenchido
             const clienteNameForFilename = clienteInput.value.trim().replace(/[^a-zA-Z0-9_]/g, ''); 
             if (!clienteNameForFilename) {
-                 showAnimatedConfirmation("Por favor, digite o nome do cliente antes de enviar as fotos.", 'warning');
+                 // Não mostra confirmação animada aqui, pois a principal tratará o caso.
+                 console.error("Erro: Nome do cliente não preenchido para nomear as fotos.");
                  return false;
             }
 
@@ -975,14 +1065,14 @@
                         body: formData
                     });
 
-                    const result = await response.text();
-                    if (result.includes("sucesso")) { // Assumindo que o Google Script retorna "sucesso" em caso de sucesso
+                    const result = response.text(); 
+                    if ((await result).includes("sucesso")) { 
                         successfulUploadsCount++;
                         console.log(`Upload de ${file.name} bem-sucedido.`);
                     } else {
                         allPhotosUploadedSuccessfully = false;
                         failedUploadsCount++;
-                        console.error(`Erro ao enviar ${file.name}: ${result}`);
+                        console.error(`Erro ao enviar ${file.name}: ${await result}`); 
                     }
                 } catch (error) {
                     allPhotosUploadedSuccessfully = false;
@@ -993,13 +1083,8 @@
             
             photoLoadingMessageDiv.style.display = 'none'; // Oculta a mensagem de carregamento
 
-            // Exibe a confirmação animada para o upload das fotos separadamente.
+            // A confirmação animada para o upload das fotos não será exibida aqui separadamente.
             // A mensagem final do formulário principal será agregada.
-            if (allPhotosUploadedSuccessfully) {
-                showAnimatedConfirmation(`Upload de fotos: ${successfulUploadsCount} enviadas.`, 'success');
-            } else {
-                showAnimatedConfirmation(`Upload de fotos: ${successfulUploadsCount} sucesso, ${failedUploadsCount} falha.`, 'warning');
-            }
             
             // Limpa após o envio das fotos
             filesToUpload = [];
