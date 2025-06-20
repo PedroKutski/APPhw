@@ -315,25 +315,25 @@
     <!-- Conteúdo da Aplicação (Inicialmente oculto) -->
     <div id="app-content" class="hidden">
         <header class="bg-white/80 backdrop-blur-sm shadow-sm w-full z-20 flex-shrink-0 sticky top-0">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
-                <div class="flex items-center gap-3">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row justify-between items-center">
+                <div class="flex items-center gap-3 mb-2 sm:mb-0">
                     <i class="fas fa-clipboard-list text-2xl text-amber-500"></i>
-                    <h1 class="text-xl md:text-2xl font-bold text-slate-800 font-poppins">Registrar Novo Teste</h1>
+                    <h1 class="text-xl md:text-2xl font-bold text-slate-800 font-poppins text-center sm:text-left">Registrar Novo Teste</h1>
                 </div>
                 
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-4 flex-wrap justify-center sm:justify-end w-full sm:w-auto">
                     <div id="testerNameDisplay" class="text-sm text-slate-600 flex items-center gap-2">
                         <i class="fas fa-user-circle text-slate-500"></i>
                         <span>Testador:</span>
                         <span id="testerNameText" class="font-semibold"></span>
-                        <!-- NEW: Span para exibir o ID do teste ao lado do nome do testador -->
+                        <!-- Span para exibir o ID do teste ao lado do nome do testador -->
                         <span id="testIdDisplay" class="text-slate-500 text-sm font-normal ml-2"></span>
                         <button id="logoutBtn" title="Trocar Testador" class="ml-2 text-slate-500 hover:text-red-500 transition-colors duration-200 focus:outline-none">
                             <i class="fas fa-sign-out-alt"></i>
                         </button>
                     </div>
-                    <!-- UPDATED: Button style and text updated -->
-                    <button id="backToMenuBtn" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-md transition-colors duration-200 flex items-center gap-2">
+                    <!-- Button style and text updated -->
+                    <button id="backToMenuBtn" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-md transition-colors duration-200 flex items-center gap-2 mt-2 sm:mt-0">
                         <i class="fas fa-arrow-left fa-sm"></i>
                         Voltar ao Menu
                     </button>
@@ -450,7 +450,7 @@
         let recallAppInitialized = false;
         let currentTestId = null; // Variável para armazenar o ID único do teste atual
         let longPressTimer = null; // Timer para a detecção de long press
-        const LONG_PRESS_THRESHOLD = 5000; // Milissegundos para considerar um long press (5 segundos)
+        const LONG_PRESS_THRESHOLD = 500; // Milissegundos para considerar um long press (0.5 segundos)
 
         // Variáveis para o bloqueio do cliente
         let isClientLocked = false;
@@ -683,13 +683,46 @@
                 // O usuário optou por não enviar com N/A, então não faz mais nada.
             });
 
-            // Long-press event listeners for feedbackBtn
+            // REFACTOR: Unificação do manuseio de eventos de clique/toque para o feedbackBtn
+            let touchMoved = false; // Flag para detectar arrasto em touch
+            
+            feedbackBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // Evita rolagem e zoom ao tocar
+                touchMoved = false; // Reseta o flag de movimento
+                touchStartTime = new Date().getTime();
+                longPressTimer = setTimeout(() => {
+                    setAllComponentsToOK();
+                    longPressTimer = null; // Limpa o timer pois a ação de long press foi executada
+                }, LONG_PRESS_THRESHOLD);
+            }, { passive: false });
+
+            feedbackBtn.addEventListener('touchmove', () => {
+                touchMoved = true; // Define que houve movimento durante o toque
+            });
+
+            feedbackBtn.addEventListener('touchend', (e) => {
+                e.preventDefault(); // Evita o comportamento padrão do touch
+                clearTimeout(longPressTimer); // Sempre limpa o timer ao levantar o dedo
+                longPressTimer = null; // Garante que o timer seja null
+
+                // Se não houve movimento (um toque puro) E o long press não foi detectado (timer foi limpo antes de disparar)
+                if (!touchMoved && !longPressTimer) { // longPressTimer já é null aqui se o timeout NÃO disparou
+                     feedbackModal.classList.add('visible');
+                }
+            }, { passive: false });
+
+            // Para eventos de mouse (garantir que funcionem em desktop)
+            let mouseDownTime;
+            let mouseLongPressFired = false;
+
             feedbackBtn.addEventListener('mousedown', (e) => {
-                // Only trigger long press for left mouse button
-                if (e.button === 0) { 
+                if (e.button === 0) { // Botão esquerdo do mouse
+                    mouseLongPressFired = false; // Reseta o flag
+                    mouseDownTime = new Date().getTime();
                     longPressTimer = setTimeout(() => {
                         setAllComponentsToOK();
-                        longPressTimer = null; // Clear the timer as it has fired
+                        mouseLongPressFired = true; // Marca que o long press foi disparado
+                        longPressTimer = null;
                     }, LONG_PRESS_THRESHOLD);
                 }
             });
@@ -697,22 +730,20 @@
             feedbackBtn.addEventListener('mouseup', () => {
                 clearTimeout(longPressTimer);
                 longPressTimer = null;
+
+                if (!mouseLongPressFired) { // Se o long press NÃO foi disparado (foi um clique rápido)
+                    feedbackModal.classList.add('visible');
+                }
             });
 
             feedbackBtn.addEventListener('mouseleave', () => {
                 clearTimeout(longPressTimer);
                 longPressTimer = null;
+                mouseLongPressFired = false; // Reseta o flag se o mouse sair do botão
             });
 
-            feedbackBtn.addEventListener('click', () => {
-                // If longPressTimer is still active, it means it was a short click, so open modal
-                if (longPressTimer) { // Only open if the timer was not cleared by long press
-                    feedbackModal.classList.add('visible');
-                }
-                clearTimeout(longPressTimer); // Ensure timer is cleared on click as well
-                longPressTimer = null;
-            });
-
+            // O event listener 'click' padrão é removido ou ignorado para evitar duplicação,
+            // pois 'touchend' e 'mouseup' já tratam o toque/clique rápido.
 
             cancelFeedbackBtn.addEventListener('click', () => feedbackModal.classList.remove('visible'));
             submitFeedbackBtn.addEventListener('click', submitFeedback);
