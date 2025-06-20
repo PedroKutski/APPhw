@@ -25,10 +25,17 @@
             --na-bg: #F3F4F6; --na-border: #D1D5DB; --na-text: #4B5563;
             --font-poppins: 'Poppins', sans-serif;
         }
-        html { scroll-behavior: smooth; }
+        html, body {
+            height: 100%; /* Garante que HTML e BODY ocupem 100% da altura da viewport */
+            margin: 0;
+            padding: 0;
+        }
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f1f5f9;
+            display: flex; /* Habilita flexbox para o body */
+            flex-direction: column; /* Organiza os filhos em coluna */
+            overflow: hidden; /* Impede a rolagem global da página */
         }
         
         /* Estilo da Tela de Login - Moderno e Neutro */
@@ -58,10 +65,30 @@
         }
         #mainLoginScreen h1 i { margin-right: 12px; color: #64748b; /* Slate 500 */ }
 
+        /* Estilos para o conteúdo principal da aplicação */
+        #app-content {
+            display: flex; /* Habilita flexbox para o conteúdo do app */
+            flex-direction: column; /* Organiza cabeçalho e main em coluna */
+            flex-grow: 1; /* Permite que o app-content preencha o espaço vertical restante */
+            min-height: 0; /* Essencial para que flex-grow funcione corretamente em alguns navegadores */
+            overflow: hidden; /* Esconde a barra de rolagem do próprio app-content */
+        }
+
+        #recall-container { 
+            flex-grow: 1; /* Faz com que o main preencha o espaço vertical disponível */
+            overflow-y: auto; /* Habilita rolagem vertical apenas dentro desta seção se o conteúdo exceder */
+            -webkit-overflow-scrolling: touch; /* Melhora a rolagem em dispositivos iOS */
+            padding: 1.5rem; /* Ajusta o padding para ser parte da área de rolagem */
+            box-sizing: border-box; /* Inclui padding na altura/largura total */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Alinha o conteúdo (o .app) ao topo */
+        }
         #recall-container .app { 
             background: var(--card-background); padding: 35px 40px; border-radius: 20px; 
             box-shadow: var(--shadow-lg); width: 100%; max-width: 850px; 
-            display: flex; flex-direction: column; gap: 25px; position: relative; margin-bottom: auto; 
+            display: flex; flex-direction: column; gap: 25px; position: relative;
+            margin-bottom: 0; /* Remove auto margin que pode interferir com o flexbox */
         }
         #recall-container h1 { text-align: center; font-size: 2rem; font-family: var(--font-poppins); color: var(--primary-dark); margin-bottom: 15px; font-weight: 700; }
         #recall-container .component { 
@@ -425,7 +452,7 @@
         let longPressTimer = null; // Timer para a detecção de long press
         const LONG_PRESS_THRESHOLD = 5000; // Milissegundos para considerar um long press (5 segundos)
 
-        // NEW: Variáveis para o bloqueio do cliente
+        // Variáveis para o bloqueio do cliente
         let isClientLocked = false;
         let lockedClientName = '';
 
@@ -479,12 +506,12 @@
         // testIdDisplay agora está no header ao lado do nome do testador
         const testIdDisplay = document.getElementById('testIdDisplay'); 
 
-        // NEW: Elementos do modal de confirmação de N/A
+        // Elementos do modal de confirmação de N/A
         const naConfirmationModal = document.getElementById('naConfirmationModal');
         const confirmNaSendBtn = document.getElementById('confirmNaSend');
         const cancelNaSendBtn = document.getElementById('cancelNaSend');
 
-        // NEW: Elementos para o bloqueio do cliente
+        // Elementos para o bloqueio do cliente
         const lockClientBtn = document.getElementById('lockClientBtn');
         const lockIcon = document.getElementById('lockIcon');
 
@@ -601,7 +628,7 @@
                 }
             });
 
-            // NEW: Listener para o botão de cadeado do cliente
+            // Listener para o botão de cadeado do cliente
             lockClientBtn.addEventListener('click', () => {
                 isClientLocked = !isClientLocked;
                 localStorage.setItem('isClientLocked', isClientLocked);
@@ -646,7 +673,7 @@
             confirmSendBtn.addEventListener('click', () => { confirmSendModal.classList.remove('visible'); submitData(); });
             cancelSendBtn.addEventListener('click', () => confirmSendModal.classList.remove('visible'));
             
-            // NEW: Listeners para o modal de confirmação de N/A
+            // Listeners para o modal de confirmação de N/A
             confirmNaSendBtn.addEventListener('click', () => {
                 naConfirmationModal.classList.remove('visible'); // Esconde o modal de N/A
                 confirmSendModal.classList.add('visible');     // Mostra o modal de confirmação principal
