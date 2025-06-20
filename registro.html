@@ -289,6 +289,8 @@
                         <i class="fas fa-user-circle text-slate-500"></i>
                         <span>Testador:</span>
                         <span id="testerNameText" class="font-semibold"></span>
+                        <!-- NEW: Span para exibir o ID do teste ao lado do nome do testador -->
+                        <span id="testIdDisplay" class="text-slate-500 text-sm font-normal ml-2"></span>
                         <button id="logoutBtn" title="Trocar Testador" class="ml-2 text-slate-500 hover:text-red-500 transition-colors duration-200 focus:outline-none">
                             <i class="fas fa-sign-out-alt"></i>
                         </button>
@@ -309,8 +311,8 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="field"><label for="modelo" class="font-semibold">Modelo do Dispositivo</label><select id="modelo" name="modelo" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"><option value="" disabled selected>Selecione o modelo</option><option value="HF801">HF801</option><option value="HF810">HF810</option><option value="HF900">HF900</option><option value="HF405">HF405</option><option value="HF918">HF918</option></select></div>
                         <div class="field hidden" id="clienteField">
-                            <!-- MODIFIED: Label now includes a span for the test ID -->
-                            <label for="cliente" class="font-semibold">Nome do Cliente <span id="testIdDisplay" class="text-slate-500 text-sm font-normal ml-2"></span></label>
+                            <!-- MODIFIED: Label for cliente no longer contains testIdDisplay -->
+                            <label for="cliente" class="font-semibold">Nome do Cliente</label>
                             <input type="text" id="cliente" name="cliente" placeholder="Ex: João Silva" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
                         </div>
                     </div>
@@ -342,7 +344,6 @@
                 <button type="button" id="openCameraButton" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors duration-200 shadow-md">
                     <i class="fas fa-camera mr-2"></i>Abrir Câmera
                 </button>
-                <!-- O botão 'Enviar Fotos Anexadas' foi removido, pois o envio será automático com o formulário principal. -->
             </div>
 
             <!-- Camera Container -->
@@ -434,7 +435,6 @@
 
         // Elementos DOM da Câmera e Upload
         const openCameraButton = document.getElementById('openCameraButton');
-        // O botão 'uploadAttachedPhotosBtn' foi removido do HTML e sua lógica integrada ao submitData.
         const cameraContainer = document.getElementById('cameraContainer');
         const cameraPreview = document.getElementById('cameraPreview');
         const captureBtn = document.getElementById('captureBtn');
@@ -442,7 +442,8 @@
         const thumbnailsContainer = document.getElementById('thumbnails');
         const photoLoadingMessageDiv = document.getElementById('photoLoadingMessage'); 
         const animatedConfirmationDiv = document.getElementById('animatedConfirmation');
-        const testIdDisplay = document.getElementById('testIdDisplay'); // Elemento para exibir o ID
+        // NEW: testIdDisplay agora está no header ao lado do nome do testador
+        const testIdDisplay = document.getElementById('testIdDisplay'); 
 
         // --- LÓGICA DE PERSISTÊNCIA E INICIALIZAÇÃO ---
         function checkLoginStatus() {
@@ -466,6 +467,9 @@
             appContent.classList.remove('hidden'); 
             if (!recallAppInitialized) initRecallApp(); 
             testerNameText.textContent = globalTesterName; 
+            // Garante que o ID do teste seja limpo ao mostrar o app, ou gere um novo se necessário
+            currentTestId = null; // Limpa o ID antigo ao entrar no app
+            testIdDisplay.textContent = ''; // Garante que não haja ID pré-existente
         }
         
         function handleLogin() {
@@ -496,6 +500,7 @@
                 const modelo = modeloSelect.value;
                 clienteInput.value = ''; // Limpa o campo cliente ao mudar o modelo
                 testIdDisplay.textContent = ''; // Limpa o ID antigo
+                currentTestId = null; // Zera o ID ao mudar o modelo
                 if (modelo) {
                     clienteField.classList.remove('hidden');
                     componentesField.classList.remove('hidden');
@@ -509,14 +514,15 @@
                 gerarComponentesUI(modelo);
             });
 
-            // Adiciona um listener para o campo cliente para gerar o ID apenas quando o nome do cliente for digitado
+            // O ID será gerado apenas na mudança do modelo, não mais no input do cliente.
             clienteInput.addEventListener('input', () => {
-                if (modeloSelect.value && clienteInput.value.trim() && !currentTestId) {
+                // Não é mais necessário gerar ID aqui, mas pode-se validar a presença do ID
+                if (!currentTestId && modeloSelect.value.trim() && clienteInput.value.trim()) {
                     generateAndDisplayTestId();
-                } else if (!clienteInput.value.trim() && currentTestId) {
-                    // Limpa o ID se o nome do cliente for apagado
-                    currentTestId = null;
-                    testIdDisplay.textContent = '';
+                } else if (!clienteInput.value.trim() && modeloSelect.value.trim()) {
+                     // Se o nome do cliente for apagado, mas o modelo ainda está selecionado
+                     // podemos manter o ID, ou limpá-lo se a intenção for iniciar um novo teste.
+                     // Por enquanto, vamos mantê-lo, pois já está vinculado ao modelo.
                 }
             });
 
@@ -554,7 +560,6 @@
             openCameraButton.addEventListener('click', () => openCamera('environment'));
             captureBtn.addEventListener('click', capturePhoto);
             cancelCameraBtn.addEventListener('click', closeCamera);
-            // uploadAttachedPhotosBtn.addEventListener('click', uploadPhotos); // Este botão foi removido, a função é chamada dentro de submitData
         }
 
         /**
@@ -567,7 +572,7 @@
             const randomLetter = letters.charAt(Math.floor(Math.random() * letters.length));
             const randomDigits = Math.floor(1000 + Math.random() * 9000); // Gera um número de 4 dígitos
             currentTestId = `(${randomLetter}${randomDigits})`;
-            testIdDisplay.textContent = currentTestId;
+            testIdDisplay.textContent = currentTestId; // Exibe no elemento testIdDisplay no header
             console.log("ID do Teste gerado:", currentTestId);
         }
 
@@ -585,7 +590,7 @@
             updateThumbnails(); // Limpa as miniaturas
             closeCamera(); // Garante que a câmera esteja desligada
             currentTestId = null;
-            testIdDisplay.textContent = ''; // Limpa a exibição do ID
+            testIdDisplay.textContent = ''; // Limpa a exibição do ID no header
         }
 
         function showStatusMessage(element, message, type = 'success') {
@@ -682,7 +687,6 @@
             
             const testColor = getTestColor();
             let photoUploadSuccess = true; // Assume sucesso inicialmente
-            let combinedClienteName = clienteInput.value.trim(); // Nome do cliente original
             let combinedMessage = 'Dados enviados com sucesso!';
             let combinedMessageType = 'success';
 
@@ -701,20 +705,16 @@
                 console.log("Nenhuma foto para enviar.");
             }
 
-            // 2. Prepara o payload do formulário principal com o ID no nome do cliente
-            if (currentTestId && clienteInput.value.trim()) {
-                combinedClienteName = `${currentTestId} ${clienteInput.value.trim()}`;
-            }
-
+            // 2. Prepara o payload do formulário principal
             const payload = {
                 action: 'create',
                 data: new Date().toISOString(),
                 modelo: modeloSelect.value,
-                cliente: combinedClienteName, // Cliente com ID prefixado
-                nome_tester: globalTesterName,
+                cliente: clienteInput.value.trim(), // Cliente SEM o ID prefixado na planilha
+                nome_tester: `${globalTesterName} ${currentTestId}`, // Testador COM o ID prefixado na planilha
                 tester_color: testColor,
                 observacao: observacaoTextarea.value.trim(),
-                test_id: currentTestId // Mantém o ID separado se precisar no script da planilha também
+                test_id: currentTestId // Mantém o ID separado se precisar no script da planilha para outros fins
             };
 
             componentesConfig.forEach(comp => {
@@ -729,7 +729,6 @@
             // 3. Enviar dados do formulário
             try {
                 await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-                // showAnimatedConfirmation('Dados enviados com sucesso!', 'success'); // Já tratado na mensagem combinada
             } catch (err) {
                 console.error("Erro no envio de dados do formulário:", err);
                 combinedMessage = 'Erro crítico ao enviar dados do formulário. Verifique sua conexão. (Fotos: ' + (photoUploadSuccess ? 'Sucesso' : 'Falha') + ')';
@@ -940,7 +939,8 @@
                 return false; // Falha se não há ID para associar as fotos
             }
 
-            const clienteNameForFilename = clienteInput.value.trim().replace(/[^a-zA-Z0-9_]/g, ''); // Limpa o nome do cliente para usar no filename
+            // O nome do cliente é usado no filename, certifique-se de que ele esteja preenchido
+            const clienteNameForFilename = clienteInput.value.trim().replace(/[^a-zA-Z0-9_]/g, ''); 
             if (!clienteNameForFilename) {
                  showAnimatedConfirmation("Por favor, digite o nome do cliente antes de enviar as fotos.", 'warning');
                  return false;
