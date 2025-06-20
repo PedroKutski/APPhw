@@ -196,24 +196,27 @@
             color: #2196F3;
         }
 
-        /* Styles for animated confirmation */
+        /* Styles for animated confirmation - ADJUSTED FOR BOTTOM-RIGHT */
         #animatedConfirmation {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            bottom: 20px; /* Position at the bottom */
+            right: 20px; /* Position at the right */
+            transform: translateX(0); /* Remove central translation */
             background-color: #4CAF50; /* Green for success */
             color: white;
-            padding: 20px 30px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            padding: 10px 15px; /* Reduced padding */
+            border-radius: 8px; /* Slightly smaller border-radius */
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2); /* Adjusted shadow */
             display: flex;
-            flex-direction: column;
+            flex-direction: row; /* Changed to row for horizontal layout */
             align-items: center;
             gap: 10px;
             opacity: 0;
             visibility: hidden; /* Hidden by default, no animation */
             z-index: 1000;
+            width: auto; /* Allow width to adjust to content */
+            max-width: 90%; /* Prevent it from getting too wide on small screens */
+            white-space: nowrap; /* Keep text on single line if possible */
         }
 
         #animatedConfirmation.is-animating { /* New class to activate animation */
@@ -223,13 +226,17 @@
         #animatedConfirmation.error { background-color: #f44336; } /* Red for error */
         #animatedConfirmation.warning { background-color: #ff9800; } /* Orange for warning */
 
-        #animatedConfirmation .icon { font-size: 48px; }
+        #animatedConfirmation .icon { 
+            font-size: 24px; /* Reduced icon size */
+            line-height: 1; /* Align icon better */
+        }
 
+        /* Keyframes for animation - ADJUSTED FOR BOTTOM-RIGHT */
         @keyframes fade-in-out {
-            0% { opacity: 0; visibility: hidden; transform: translate(-50%, -40%) scale(0.9); }
-            10% { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); }
-            90% { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); }
-            100% { opacity: 0; visibility: hidden; transform: translate(-50%, -60%) scale(0.9); }
+            0% { opacity: 0; visibility: hidden; transform: translateY(20px); } /* Start slightly below */
+            10% { opacity: 1; visibility: visible; transform: translateY(0); } /* Slide up to visible */
+            90% { opacity: 1; visibility: visible; transform: translateY(0); } /* Stay visible */
+            100% { opacity: 0; visibility: hidden; transform: translateY(20px); } /* Slide down to hidden */
         }
 
         /* Responsive adjustments */
@@ -249,11 +256,14 @@
                 height: 80px;
             }
             #animatedConfirmation {
-                width: 80%;
-                padding: 15px 20px;
+                bottom: 10px; /* Closer to bottom on small screens */
+                right: 10px; /* Closer to right on small screens */
+                padding: 8px 12px; /* Even smaller padding */
+                font-size: 0.8rem; /* Smaller text */
+                white-space: normal; /* Allow text to wrap on small screens */
             }
             #animatedConfirmation .icon {
-                font-size: 36px;
+                font-size: 20px; /* Even smaller icon */
             }
         }
     </style>
@@ -311,8 +321,13 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="field"><label for="modelo" class="font-semibold">Modelo do Dispositivo</label><select id="modelo" name="modelo" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"><option value="" disabled selected>Selecione o modelo</option><option value="HF801">HF801</option><option value="HF810">HF810</option><option value="HF900">HF900</option><option value="HF405">HF405</option><option value="HF918">HF918</option></select></div>
                         <div class="field hidden" id="clienteField">
-                            <!-- MODIFIED: Label for cliente no longer contains testIdDisplay -->
-                            <label for="cliente" class="font-semibold">Nome do Cliente</label>
+                            <!-- MODIFIED: Added lock button -->
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="cliente" class="font-semibold">Nome do Cliente</label>
+                                <button type="button" id="lockClientBtn" class="text-slate-500 hover:text-blue-500 transition-colors duration-200" title="Manter nome do cliente após o envio">
+                                    <i class="fas fa-lock-open" id="lockIcon"></i>
+                                </button>
+                            </div>
                             <input type="text" id="cliente" name="cliente" placeholder="Ex: João Silva" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
                         </div>
                     </div>
@@ -410,6 +425,10 @@
         let longPressTimer = null; // Timer para a detecção de long press
         const LONG_PRESS_THRESHOLD = 5000; // Milissegundos para considerar um long press (5 segundos)
 
+        // NEW: Variáveis para o bloqueio do cliente
+        let isClientLocked = false;
+        let lockedClientName = '';
+
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyE4h4LL3vk8n0m2A0C3p3n6Plz9w9YV0Ip_N8CpBpIk9VRKQmSkIWmzDL05XgdVKmlmw/exec';
         // URL para o Google Apps Script de upload de fotos. Certifique-se de que este script esteja ativo e configurado corretamente.
         const PHOTO_UPLOAD_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyon32vtTfnuG0DcdLiRJb5TK9fPzVHcOnULufkyV9lEWNIFBhz-oyAgCNjY6gBtoJf/exec";
@@ -465,9 +484,24 @@
         const confirmNaSendBtn = document.getElementById('confirmNaSend');
         const cancelNaSendBtn = document.getElementById('cancelNaSend');
 
+        // NEW: Elementos para o bloqueio do cliente
+        const lockClientBtn = document.getElementById('lockClientBtn');
+        const lockIcon = document.getElementById('lockIcon');
+
+
         // --- LÓGICA DE PERSISTÊNCIA E INICIALIZAÇÃO ---
         function checkLoginStatus() {
             const savedName = localStorage.getItem('testerName');
+            const savedIsClientLocked = localStorage.getItem('isClientLocked');
+            
+            if (savedIsClientLocked === 'true') {
+                isClientLocked = true;
+                lockedClientName = localStorage.getItem('lockedClientName') || '';
+            } else {
+                isClientLocked = false;
+                lockedClientName = '';
+            }
+
             if (savedName) {
                 globalTesterName = savedName;
                 showApp();
@@ -490,6 +524,16 @@
             // Garante que o ID do teste seja limpo ao mostrar o app, ou gere um novo se necessário
             currentTestId = null; // Limpa o ID antigo ao entrar no app
             testIdDisplay.textContent = ''; // Garante que não haja ID pré-existente
+            
+            // Define o estado inicial do campo do cliente e do botão de cadeado
+            if (isClientLocked) {
+                clienteInput.value = lockedClientName;
+                lockIcon.className = 'fas fa-lock'; // Define o ícone como cadeado fechado
+                clienteField.classList.remove('hidden'); // Garante que o campo do cliente esteja visível
+            } else {
+                lockIcon.className = 'fas fa-lock-open'; // Define o ícone como cadeado aberto
+                clienteInput.value = ''; // Garante que esteja limpo se não estiver bloqueado
+            }
         }
         
         function handleLogin() {
@@ -504,6 +548,11 @@
         function handleLogout() {
             localStorage.removeItem('testerName');
             globalTesterName = '';
+            // Ao deslogar, redefinir também o estado do bloqueio do cliente e o nome salvo
+            isClientLocked = false;
+            lockedClientName = '';
+            localStorage.removeItem('isClientLocked');
+            localStorage.removeItem('lockedClientName');
             if(recallAppInitialized) {
                 resetForm();
             }
@@ -518,16 +567,22 @@
             // --- Event Listeners do App ---
             modeloSelect.addEventListener('change', () => {
                 const modelo = modeloSelect.value;
-                clienteInput.value = ''; // Limpa o campo cliente ao mudar o modelo
+                // Apenas limpa o campo cliente se NÃO estiver bloqueado
+                if (!isClientLocked) {
+                    clienteInput.value = ''; 
+                }
                 testIdDisplay.textContent = ''; // Limpa o ID antigo
                 currentTestId = null; // Zera o ID ao mudar o modelo
                 if (modelo) {
                     clienteField.classList.remove('hidden');
                     componentesField.classList.remove('hidden');
                     enviarBtn.classList.remove('hidden');
-                    clienteInput.focus();
+                    if (!isClientLocked) { // Apenas foca se precisar de uma nova entrada
+                        clienteInput.focus();
+                    }
                     generateAndDisplayTestId(); // Gera e exibe o ID quando o modelo é selecionado
                 } else {
+                    // Se nenhum modelo for selecionado, reseta o formulário completamente (o que respeitará o bloqueio do cliente)
                     resetForm();
                 }
                 clearStatusMessage(statusDiv);
@@ -540,9 +595,26 @@
                 if (!currentTestId && modeloSelect.value.trim() && clienteInput.value.trim()) {
                     generateAndDisplayTestId();
                 } else if (!clienteInput.value.trim() && modeloSelect.value.trim()) {
-                     // Se o nome do cliente for apagado, mas o modelo ainda está selecionado
-                     // podemos manter o ID, ou limpá-lo se a intenção for iniciar um novo teste.
-                     // Por enquanto, vamos mantê-lo, pois já está vinculado ao modelo.
+                    // Se o nome do cliente for apagado, mas o modelo ainda está selecionado
+                    // podemos manter o ID, ou limpá-lo se a intenção for iniciar um novo teste.
+                    // Por enquanto, vamos mantê-lo, pois já está vinculado ao modelo.
+                }
+            });
+
+            // NEW: Listener para o botão de cadeado do cliente
+            lockClientBtn.addEventListener('click', () => {
+                isClientLocked = !isClientLocked;
+                localStorage.setItem('isClientLocked', isClientLocked);
+                if (isClientLocked) {
+                    lockIcon.className = 'fas fa-lock'; // Troca para cadeado fechado
+                    lockedClientName = clienteInput.value.trim(); // Salva o nome atual do cliente
+                    localStorage.setItem('lockedClientName', lockedClientName);
+                    showAnimatedConfirmation('Nome do cliente fixado.', 'success');
+                } else {
+                    lockIcon.className = 'fas fa-lock-open'; // Troca para cadeado aberto
+                    lockedClientName = ''; // Limpa o nome salvo
+                    localStorage.removeItem('lockedClientName');
+                    showAnimatedConfirmation('Nome do cliente não será mais fixado.', 'warning');
                 }
             });
 
@@ -577,7 +649,7 @@
             // NEW: Listeners para o modal de confirmação de N/A
             confirmNaSendBtn.addEventListener('click', () => {
                 naConfirmationModal.classList.remove('visible'); // Esconde o modal de N/A
-                confirmSendModal.classList.add('visible');      // Mostra o modal de confirmação principal
+                confirmSendModal.classList.add('visible');     // Mostra o modal de confirmação principal
             });
             cancelNaSendBtn.addEventListener('click', () => {
                 naConfirmationModal.classList.remove('visible'); // Esconde o modal de N/A
@@ -607,7 +679,7 @@
 
             feedbackBtn.addEventListener('click', () => {
                 // If longPressTimer is still active, it means it was a short click, so open modal
-                if (longPressTimer) {
+                if (longPressTimer) { // Only open if the timer was not cleared by long press
                     feedbackModal.classList.add('visible');
                 }
                 clearTimeout(longPressTimer); // Ensure timer is cleared on click as well
@@ -663,6 +735,11 @@
 
 
         function resetForm() {
+            let tempClientName = '';
+            if (isClientLocked) {
+                tempClientName = clienteInput.value.trim(); // Salva o nome do cliente antes do reset completo
+            }
+
             form.reset();
             componentsDiv.innerHTML = '';
             clienteField.classList.add('hidden');
@@ -677,6 +754,11 @@
             closeCamera(); // Garante que a câmera esteja desligada
             currentTestId = null;
             testIdDisplay.textContent = ''; // Limpa a exibição do ID no header
+
+            if (isClientLocked) {
+                clienteInput.value = tempClientName; // Restaura o nome do cliente
+                clienteField.classList.remove('hidden'); // Garante que o campo do cliente esteja visível
+            }
         }
 
         function showStatusMessage(element, message, type = 'success') {
@@ -1031,9 +1113,9 @@
             // O nome do cliente é usado no filename, certifique-se de que ele esteja preenchido
             const clienteNameForFilename = clienteInput.value.trim().replace(/[^a-zA-Z0-9_]/g, ''); 
             if (!clienteNameForFilename) {
-                 // Não mostra confirmação animada aqui, pois a principal tratará o caso.
-                 console.error("Erro: Nome do cliente não preenchido para nomear as fotos.");
-                 return false;
+                // Não mostra confirmação animada aqui, pois a principal tratará o caso.
+                console.error("Erro: Nome do cliente não preenchido para nomear as fotos.");
+                return false;
             }
 
             photoLoadingMessageDiv.style.display = 'block'; // Exibe a mensagem de carregamento para as fotos
