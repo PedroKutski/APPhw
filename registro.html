@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Registro de Teste - Central de Qualidade</title>
+    <title>Painel de Testes</title>
     <!-- Dependências Externas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -15,324 +15,222 @@
     <!-- Estilos Embutidos -->
     <style>
         :root {
-            --primary-color: #3B82F6; --primary-dark: #2563EB;
-            --accent-color: #F59E0B; --card-background: #ffffff;
+            /* Cores base */
+            --card-background: #ffffff;
             --text-color: #1F2937; --text-color-light: #4B5563;
-            --border-color: #D1D5DB; --focus-shadow-color: rgba(59, 130, 246, 0.25);
+            --border-color: #e5e7eb; --focus-shadow-color: rgba(59, 130, 246, 0.25);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-            --success-bg: #D1FAE5; --success-border: #10B981; --success-text: #047857;
-            --failure-bg: #FEE2E2; --failure-border: #EF4444; --failure-text: #B91C1C;
-            --na-bg: #F3F4F6; --na-border: #D1D5DB; --na-text: #4B5563;
             --font-poppins: 'Poppins', sans-serif;
+
+            /* Temas - Cores que mudarão dinamicamente */
+            --theme-primary: #3B82F6; /* Azul para Recall por padrão */
+            --theme-primary-dark: #2563EB;
+            --theme-primary-bg-light: #EFF6FF;
+
+            /* Component Status Colors */
+            --status-ok-color: #10B981;
+            --status-falha-color: #EF4444;
+            --status-na-color: #6b7280;
         }
+
+        /* --- Definições de Temas --- */
+        #app-content.mode-recall {
+            --theme-primary: #3B82F6; /* Azul */
+            --theme-primary-dark: #2563EB;
+            --theme-primary-bg-light: #DBEAFE;
+        }
+        #app-content.mode-teste {
+            --theme-primary: #10B981; /* Verde */
+            --theme-primary-dark: #059669;
+            --theme-primary-bg-light: #D1FAE5;
+        }
+
         html, body {
-            height: 100%; /* Garante que HTML e BODY ocupem 100% da altura da viewport */
-            margin: 0;
-            padding: 0;
+            height: 100%; margin: 0; padding: 0;
         }
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f1f5f9;
-            display: flex; /* Habilita flexbox para o body */
-            flex-direction: column; /* Organiza os filhos em coluna */
-            overflow: hidden; /* Impede a rolagem global da página */
+            font-family: 'Inter', sans-serif; background-color: #f1f5f9;
+            display: flex; flex-direction: column; overflow: hidden;
         }
         
-        /* Estilo da Tela de Login - Moderno e Neutro */
-        #mainLoginScreen {
-            display: flex; position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
-            justify-content: center; align-items: center; z-index: 9999;
-            opacity: 1; transition: opacity 0.5s ease-out;
-        }
+        #mainLoginScreen { display: flex; justify-content: center; align-items: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #f8fafc; z-index: 9999; opacity: 1; transition: opacity 0.5s ease-out; overflow: hidden; }
+        #mainLoginScreen::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(45deg, #3B82F6, #60A5FA); clip-path: ellipse(70% 80% at 15% 50%); }
         #mainLoginScreen.hidden-auth { opacity: 0; pointer-events: none; }
-        #mainLoginScreen .login-container {
-            background: #ffffff; padding: 40px; border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1); width: 100%; max-width: 420px;
-            text-align: center; color: #1f2937;
-            transform: translateY(0); opacity: 1; animation: fadeInUpLogin 0.6s ease-out;
-            border-top: 5px solid #64748b; /* Slate 500 */
-        }
-        @keyframes fadeInUpLogin {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        #mainLoginScreen h1 { 
-            font-family: var(--font-poppins); margin-bottom: 25px; font-size: 1.8rem; 
-            color: #1e293b; /* Slate 800 */
-            font-weight: 700; 
-        }
-        #mainLoginScreen h1 i { margin-right: 12px; color: #64748b; /* Slate 500 */ }
-
-        /* Estilos para o conteúdo principal da aplicação */
-        #app-content {
-            display: flex; /* Habilita flexbox para o conteúdo do app */
-            flex-direction: column; /* Organiza cabeçalho e main em coluna */
-            flex-grow: 1; /* Permite que o app-content preencha o espaço vertical restante */
-            min-height: 0; /* Essencial para que flex-grow funcione corretamente em alguns navegadores */
-            overflow: hidden; /* Esconde a barra de rolagem do próprio app-content */
-        }
-
-        #recall-container { 
-            flex-grow: 1; /* Faz com que o main preencha o espaço vertical disponível */
-            overflow-y: auto; /* Habilita rolagem vertical apenas dentro desta seção se o conteúdo exceder */
-            -webkit-overflow-scrolling: touch; /* Melhora a rolagem em dispositivos iOS */
-            padding: 1.5rem; /* Ajusta o padding para ser parte da área de rolagem */
-            box-sizing: border-box; /* Inclui padding na altura/largura total */
-            display: flex;
-            justify-content: center;
-            align-items: flex-start; /* Alinha o conteúdo (o .app) ao topo */
-        }
-        #recall-container .app { 
-            background: var(--card-background); padding: 35px 40px; border-radius: 20px; 
-            box-shadow: var(--shadow-lg); width: 100%; max-width: 850px; 
-            display: flex; flex-direction: column; gap: 25px; position: relative;
-            margin-bottom: 0; /* Remove auto margin que pode interferir com o flexbox */
-        }
-        #recall-container h1 { text-align: center; font-size: 2rem; font-family: var(--font-poppins); color: var(--primary-dark); margin-bottom: 15px; font-weight: 700; }
-        #recall-container .component { 
-            padding: 15px 20px; border-radius: 12px; display: flex; flex-direction: column; align-items: stretch;
-            user-select: none; transition: all 0.3s ease; border: 1px solid transparent; 
-        }
-        #recall-container .component-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        #recall-container .component.unmarked-highlight { box-shadow: 0 0 0 3px var(--failure-border); transform: scale(1.01); }
-        #recall-container .component:hover { transform: translateY(-2px); box-shadow: 0 4px 8px -2px rgba(0,0,0,0.1); }
-        #recall-container .component .icon { font-size: 1.8rem; transition: transform 0.3s ease, color 0.3s ease; }
-        #recall-container .status-na { background-color: var(--na-bg); border-color: var(--na-border); color: var(--na-text); }
-        #recall-container .status-ok { background-color: var(--success-bg); border-color: var(--success-border); color: var(--success-text); }
-        #recall-container .status-falha { background-color: var(--failure-bg); border-color: var(--failure-border); color: var(--failure-text); }
+        #mainLoginScreen .login-container { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 2.5rem 3rem; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2); width: 100%; max-width: 450px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.3); position: relative; z-index: 1; animation: fadeInUpLogin 0.6s ease-out forwards; }
+        @keyframes fadeInUpLogin { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        #mainLoginScreen .login-title { font-family: var(--font-poppins); margin-bottom: 0.75rem; font-size: 2rem; color: #1e293b; font-weight: 700; }
+        #mainLoginScreen .login-subtitle { font-size: 1rem; color: #4b5563; margin-bottom: 2.5rem; }
+        .input-wrapper { position: relative; margin-bottom: 1.5rem; }
+        .input-wrapper .icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.1rem; pointer-events: none; }
+        #mainTesterName { display: block; width: 100%; padding: 1rem 1rem 1rem 3rem; background-color: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 1rem; color: #1e293b; transition: all 0.2s ease-in-out; -webkit-appearance: none; }
+        #mainTesterName:focus { outline: none; border-color: #3B82F6; background-color: #fff; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+        #mainLoginBtn { width: 100%; margin-top: 1rem; background: linear-gradient(45deg, #2563EB, #60A5FA); color: white; font-weight: 600; font-size: 1.1rem; padding: 0.9rem 1rem; border-radius: 12px; border: none; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2); }
+        #mainLoginBtn:hover { transform: translateY(-3px); box-shadow: 0 7px 20px rgba(59, 130, 246, 0.3); }
         
-        .modal { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30, 41, 59, 0.6); 
-            display: none; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.35s ease; 
-        }
-        .modal.visible { display: flex; opacity: 1; visibility: visible; }
-        .modal-content { 
-            background: #fff; padding: 35px; border-radius: 18px; 
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); width: 90%; max-width: 550px; 
-            transform: translateY(30px) scale(0.95); opacity: 0; transition: transform 0.35s ease, opacity 0.35s ease; 
-        }
-        .modal.visible .modal-content { transform: translateY(0) scale(1); opacity: 1; }
-        .feedback-btn { 
-            position: fixed; background: #4B5563; color: white; border: none; border-radius: 50%; width: 60px; height: 60px; 
-            font-size: 1.6rem; cursor: pointer; box-shadow: var(--shadow-lg); display: flex; justify-content: center; align-items: center; 
-            transition: all 0.3s ease; z-index: 999; bottom: 30px; right: 30px; 
-        }
-        .feedback-btn:hover { transform: translateY(-5px) scale(1.1); box-shadow: 0 10px 20px rgba(0,0,0,0.2); background: #374151;}
+        #app-content { display: flex; flex-direction: column; flex-grow: 1; min-height: 0; overflow: hidden; transition: background-color 0.4s ease; }
+        #recall-container { flex-grow: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 1.5rem; box-sizing: border-box; display: flex; justify-content: center; align-items: flex-start; }
+        #recall-container .app { background: var(--card-background); padding: 35px 40px; border-radius: 20px; box-shadow: var(--shadow-lg); width: 100%; max-width: 850px; display: flex; flex-direction: column; gap: 20px; position: relative; margin-bottom: 0; border-top: 5px solid var(--theme-primary); transition: border-color 0.4s ease; }
+        #formTitle { text-align: center; font-size: 2rem; font-family: var(--font-poppins); color: var(--theme-primary-dark); margin-bottom: 10px; font-weight: 700; transition: color 0.4s ease, transform 0.3s ease, opacity 0.3s ease; }
+        #modeSelector { display: flex; justify-content: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .mode-selector-btn { background-color: #f1f5f9; color: #475569; border: 2px solid #e2e8f0; border-radius: 12px; padding: 12px 24px; font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; transition: all 0.3s ease; }
+        .mode-selector-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .mode-selector-btn.active { background-color: var(--theme-primary-bg-light); color: var(--theme-primary-dark); border-color: var(--theme-primary); box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .mode-selector-btn .icon { font-size: 1.25rem; }
 
-        /* --- Camera and Upload Specific Styles (merged and adapted) --- */
-        #cameraContainer {
-            display: none; /* Hidden by default */
-            max-width: 300px; /* Reduced size on larger screens */
-            width: 100%; /* Occupies 100% of available width in its container */
-            margin: 15px auto; /* Centered */
-            position: relative;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        #cameraPreview {
+        /* --- ESTILOS PARA COMPONENTES --- */
+        #componentesField legend {
             width: 100%;
-            height: auto; /* Maintains video aspect ratio */
-            border: 2px solid #333;
-            border-radius: 8px;
-            display: block; /* Ensures video occupies full width */
+            text-align: center;
+            font-size: 1.25rem;
+            color: var(--text-color);
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
         }
-        #captureControls {
+        .component-card {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
             display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 10px;
-            padding-bottom: 10px;
-        }
-        #captureBtn, #cancelCameraBtn { 
-            padding: 10px 20px;
-            font-size: 16px;
-            border-radius: 8px;
+            flex-direction: column;
             cursor: pointer;
-            border: none;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.25s ease-in-out;
+            user-select: none;
         }
-        #captureBtn { background-color: #4CAF50; color: white; } /* Green */
-        #captureBtn:hover { background-color: #45a049; transform: translateY(-2px); }
-        #cancelCameraBtn { background-color: #f44336; color: white; } /* Red */
-        #cancelCameraBtn:hover { background-color: #da190b; transform: translateY(-2px); }
-
-        #thumbnails {
+        .component-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px -5px rgba(0,0,0,0.1);
+            border-color: #d1d5db;
+        }
+        .component-header {
             display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin: 20px 0;
-            justify-content: center;
-            width: 100%; /* Allows thumbnails to take full available width */
-            max-width: 600px; /* Limits width on very large screens */
-        }
-        .thumbnail {
-            position: relative;
-            width: 100px; /* Fixed size for thumbnails */
-            height: 100px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            flex-shrink: 0; /* Prevents thumbnail from shrinking */
-        }
-        .thumbnail img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .remove-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background-color: #f44336;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            font-size: 14px;
-            line-height: 24px;
-            text-align: center;
-            cursor: pointer;
-            opacity: 0.8;
-            transition: opacity 0.3s ease;
-        }
-        .remove-btn:hover { opacity: 1; }
-        .no-photos {
-            color: #777;
-            font-style: italic;
-            text-align: center;
-            width: 100%;
-        }
-        #photoLoadingMessage { 
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 8px;
-            background-color: #ffffff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            width: 80%;
-            max-width: 500px;
-            word-wrap: break-word;
-            text-align: center;
-            display: none; /* Hidden by default */
-            font-weight: bold;
-            color: #2196F3;
-        }
-
-        /* Styles for animated confirmation - ADJUSTED FOR BOTTOM-RIGHT */
-        #animatedConfirmation {
-            position: fixed;
-            bottom: 20px; /* Position at the bottom */
-            right: 20px; /* Position at the right */
-            transform: translateX(0); /* Remove central translation */
-            background-color: #4CAF50; /* Green for success */
-            color: white;
-            padding: 10px 15px; /* Reduced padding */
-            border-radius: 8px; /* Slightly smaller border-radius */
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2); /* Adjusted shadow */
-            display: flex;
-            flex-direction: row; /* Changed to row for horizontal layout */
+            justify-content: space-between;
             align-items: center;
-            gap: 10px;
-            opacity: 0;
-            visibility: hidden; /* Hidden by default, no animation */
-            z-index: 1000;
-            width: auto; /* Allow width to adjust to content */
-            max-width: 90%; /* Prevent it from getting too wide on small screens */
-            white-space: nowrap; /* Keep text on single line if possible */
+            width: 100%;
+        }
+        .component-label {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        .component-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            transition: all 0.25s ease-in-out;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            transition: background-color 0.25s ease-in-out;
+        }
+        
+        .component-card.status-na .component-status { color: var(--status-na-color); background-color: #e5e7eb; }
+        .component-card.status-na .status-dot { background-color: var(--status-na-color); }
+        
+        .component-card.status-ok .component-status { color: #065f46; background-color: #d1fae5; }
+        .component-card.status-ok .status-dot { background-color: var(--status-ok-color); }
+        .component-card.status-ok { border-color: var(--status-ok-color); }
+        
+        .component-card.status-falha .component-status { color: #991b1b; background-color: #fee2e2; }
+        .component-card.status-falha .status-dot { background-color: var(--status-falha-color); }
+        .component-card.status-falha { border-color: var(--status-falha-color); background-color: #fef2f2; }
+
+        .failure-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease-in-out, margin-top 0.35s ease-in-out;
+            margin-top: 0;
+        }
+        .failure-details.visible {
+            max-height: 150px;
+            margin-top: 0.75rem;
+        }
+        .failure-details textarea {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background-color: #fff;
+            font-size: 0.9rem;
+            resize: vertical;
+        }
+        .failure-details textarea:focus {
+            outline: none;
+            border-color: var(--status-falha-color);
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
         }
 
-        #animatedConfirmation.is-animating { /* New class to activate animation */
-            animation: fade-in-out 3s forwards;
-        }
-
-        #animatedConfirmation.error { background-color: #f44336; } /* Red for error */
-        #animatedConfirmation.warning { background-color: #ff9800; } /* Orange for warning */
-
-        #animatedConfirmation .icon { 
-            font-size: 24px; /* Reduced icon size */
-            line-height: 1; /* Align icon better */
-        }
-
-        /* Keyframes for animation - ADJUSTED FOR BOTTOM-RIGHT */
-        @keyframes fade-in-out {
-            0% { opacity: 0; visibility: hidden; transform: translateY(20px); } /* Start slightly below */
-            10% { opacity: 1; visibility: visible; transform: translateY(0); } /* Slide up to visible */
-            90% { opacity: 1; visibility: visible; transform: translateY(0); } /* Stay visible */
-            100% { opacity: 0; visibility: hidden; transform: translateY(20px); } /* Slide down to hidden */
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 600px) {
-            .main-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-            .main-buttons button {
-                width: 80%; /* Buttons occupy more width on small screens */
-            }
-            #cameraContainer {
-                max-width: 90%; /* Camera container occupies more width on small screens */
-            }
-            .thumbnail {
-                width: 80px; /* Slightly smaller thumbnails on very small screens */
-                height: 80px;
-            }
-            #animatedConfirmation {
-                bottom: 10px; /* Closer to bottom on small screens */
-                right: 10px; /* Closer to right on small screens */
-                padding: 8px 12px; /* Even smaller padding */
-                font-size: 0.8rem; /* Smaller text */
-                white-space: normal; /* Allow text to wrap on small screens */
-            }
-            #animatedConfirmation .icon {
-                font-size: 20px; /* Even smaller icon */
-            }
-        }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30, 41, 59, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.35s ease; }
+        .modal.visible { display: flex; opacity: 1; visibility: visible; }
+        .modal-content { background: #fff; padding: 35px; border-radius: 18px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); width: 90%; max-width: 550px; transform: translateY(30px) scale(0.95); opacity: 0; transition: transform 0.35s ease, opacity 0.35s ease; }
+        .modal.visible .modal-content { transform: translateY(0) scale(1); opacity: 1; }
+        #enviarBtn { background-color: var(--theme-primary); transition: background-color 0.4s ease, transform 0.2s ease; }
+        #enviarBtn:hover { background-color: var(--theme-primary-dark); }
+        #cameraContainer { display: none; max-width: 300px; width: 100%; margin: 15px auto; position: relative; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        #cameraPreview { width: 100%; height: auto; border: 2px solid #333; border-radius: 8px; display: block; }
+        #captureControls { display: flex; justify-content: center; gap: 10px; margin-top: 10px; padding-bottom: 10px; }
+        #captureBtn, #cancelCameraBtn { padding: 10px 20px; font-size: 16px; border-radius: 8px; cursor: pointer; border: none; transition: background-color 0.3s ease, transform 0.2s ease; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+        #captureBtn { background-color: #4CAF50; color: white; }
+        #captureBtn:hover { background-color: #45a049; transform: translateY(-2px); }
+        #cancelCameraBtn { background-color: #f44336; color: white; }
+        #cancelCameraBtn:hover { background-color: #da190b; transform: translateY(-2px); }
+        #thumbnails { display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; justify-content: center; width: 100%; max-width: 600px; }
+        .thumbnail { position: relative; width: 100px; height: 100px; border: 2px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); flex-shrink: 0; }
+        .thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+        .remove-btn { position: absolute; top: 5px; right: 5px; background-color: #f44336; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 14px; line-height: 24px; text-align: center; cursor: pointer; opacity: 0.8; transition: opacity 0.3s ease; }
+        .remove-btn:hover { opacity: 1; }
+        .no-photos { color: #777; font-style: italic; text-align: center; width: 100%; }
+        #photoLoadingMessage { margin-top: 20px; padding: 15px; border-radius: 8px; background-color: #ffffff; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); width: 80%; max-width: 500px; word-wrap: break-word; text-align: center; display: none; font-weight: bold; color: #2196F3; }
+        #animatedConfirmation { position: fixed; bottom: 20px; right: 20px; transform: translateX(0); background-color: #4CAF50; color: white; padding: 10px 15px; border-radius: 8px; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2); display: flex; flex-direction: row; align-items: center; gap: 10px; opacity: 0; visibility: hidden; z-index: 1000; width: auto; max-width: 90%; white-space: nowrap; }
+        #animatedConfirmation.is-animating { animation: fade-in-out 3s forwards; }
+        #animatedConfirmation.error { background-color: #f44336; }
+        #animatedConfirmation.warning { background-color: #ff9800; }
+        #animatedConfirmation .icon { font-size: 24px; line-height: 1; }
+        @keyframes fade-in-out { 0% { opacity: 0; visibility: hidden; transform: translateY(20px); } 10% { opacity: 1; visibility: visible; transform: translateY(0); } 90% { opacity: 1; visibility: visible; transform: translateY(0); } 100% { opacity: 0; visibility: hidden; transform: translateY(20px); } }
+        @media (max-width: 768px) { #mainLoginScreen::before { clip-path: ellipse(120% 70% at 50% 30%); } #mainLoginScreen .login-container { padding: 2rem; width: 90%; } }
+        @media (max-width: 600px) { .mode-selector-btn { padding: 10px 16px; font-size: 0.9rem; } #cameraContainer { max-width: 90%; } .thumbnail { width: 80px; height: 80px; } #animatedConfirmation { bottom: 10px; right: 10px; padding: 8px 12px; font-size: 0.8rem; white-space: normal; } #animatedConfirmation .icon { font-size: 20px; } }
     </style>
 </head>
 <body>
 
-    <!-- Tela de Login/Identificação (Inicialmente visível) -->
     <div id="mainLoginScreen">
         <div class="login-container">
-            <h1><i class="fas fa-user-check"></i>Identificação do Testador</h1>
-            <div class="field text-left">
-                <label for="mainTesterName" class="font-semibold text-slate-700 mb-1 block">Seu Nome:</label>
-                <input type="text" id="mainTesterName" placeholder="Digite seu nome" required autofocus class="block w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500" />
+            <h1 class="login-title"><i class="fas fa-shield-alt" style="margin-right: 12px; color: var(--theme-primary);"></i>Painel de Testes</h1>
+            <p class="login-subtitle">Por favor, identifique-se para continuar.</p>
+            <div class="input-wrapper">
+                <i class="fas fa-user icon"></i>
+                <input type="text" id="mainTesterName" placeholder="Digite seu nome" required autofocus />
             </div>
-            <button type="button" id="mainLoginBtn" class="w-full mt-6 bg-slate-700 text-white font-bold py-3 px-4 rounded-lg hover:bg-slate-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                <i class="fas fa-sign-in-alt mr-2"></i>Entrar
+            <button type="button" id="mainLoginBtn">
+                Acessar Painel <i class="fas fa-arrow-right" style="margin-left: 8px;"></i>
             </button>
             <p id="loginErrorMessage" class="text-red-500 text-sm mt-4 h-4"></p>
         </div>
     </div>
 
-    <!-- Conteúdo da Aplicação (Inicialmente oculto) -->
     <div id="app-content" class="hidden">
         <header class="bg-white/80 backdrop-blur-sm shadow-sm w-full z-20 flex-shrink-0 sticky top-0">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row justify-between items-center">
                 <div class="flex items-center gap-3 mb-2 sm:mb-0">
-                    <i class="fas fa-clipboard-list text-2xl text-amber-500"></i>
-                    <h1 class="text-xl md:text-2xl font-bold text-slate-800 font-poppins text-center sm:text-left">Registrar Novo Teste</h1>
+                    <i class="fas fa-clipboard-check text-2xl text-amber-500"></i>
+                    <h1 class="text-xl md:text-2xl font-bold text-slate-800 font-poppins text-center sm:text-left">Painel de Testes</h1>
                 </div>
-                
                 <div class="flex items-center gap-4 flex-wrap justify-center sm:justify-end w-full sm:w-auto">
                     <div id="testerNameDisplay" class="text-sm text-slate-600 flex items-center gap-2">
                         <i class="fas fa-user-circle text-slate-500"></i>
                         <span>Testador:</span>
                         <span id="testerNameText" class="font-semibold"></span>
-                        <!-- Span para exibir o ID do teste ao lado do nome do testador -->
                         <span id="testIdDisplay" class="text-slate-500 text-sm font-normal ml-2"></span>
                         <button id="logoutBtn" title="Trocar Testador" class="ml-2 text-slate-500 hover:text-red-500 transition-colors duration-200 focus:outline-none">
                             <i class="fas fa-sign-out-alt"></i>
                         </button>
                     </div>
-                    <!-- Button style and text updated -->
                     <button id="backToMenuBtn" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-md transition-colors duration-200 flex items-center gap-2 mt-2 sm:mt-0">
                         <i class="fas fa-arrow-left fa-sm"></i>
                         Voltar ao Menu
@@ -343,12 +241,29 @@
 
         <main id="recall-container" class="flex-grow flex items-start justify-center p-4 sm:p-6 lg:p-8">
             <div class="app">
-                <h1 class="mt-4"><i class="fas fa-edit" style="margin-right:10px;"></i>Formulário de Teste</h1>
+                <h1 id="formTitle"></h1>
                 <form id="dataForm">
+                    <div id="modeSelector">
+                        <button id="selectModeRecall" type="button" class="mode-selector-btn">
+                            <i class="fas fa-search-plus icon"></i>
+                            <span>Recall</span>
+                        </button>
+                        <button id="selectModeTeste" type="button" class="mode-selector-btn">
+                            <i class="fas fa-vial icon"></i>
+                            <span>Teste</span>
+                        </button>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="field"><label for="modelo" class="font-semibold">Modelo do Dispositivo</label><select id="modelo" name="modelo" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"><option value="" disabled selected>Selecione o modelo</option><option value="HF801">HF801</option><option value="HF810">HF810</option><option value="HF900">HF900</option><option value="HF405">HF405</option><option value="HF918">HF918</option></select></div>
+                        <div class="field">
+                            <label for="modelo" class="font-semibold">Modelo do Dispositivo</label>
+                            <select id="modelo" name="modelo" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <option value="" disabled selected>Selecione o modelo</option>
+                                <option value="HF801">HF801</option><option value="HF810">HF810</option><option value="HF900">HF900</option>
+                                <option value="HF405">HF405</option><option value="HF918">HF918</option>
+                            </select>
+                        </div>
                         <div class="field hidden" id="clienteField">
-                            <!-- MODIFIED: Added lock button -->
                             <div class="flex items-center justify-between mb-1">
                                 <label for="cliente" class="font-semibold">Nome do Cliente</label>
                                 <button type="button" id="lockClientBtn" class="text-slate-500 hover:text-blue-500 transition-colors duration-200" title="Manter nome do cliente após o envio">
@@ -358,14 +273,16 @@
                             <input type="text" id="cliente" name="cliente" placeholder="Ex: João Silva" required class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
                         </div>
                     </div>
-                    <fieldset class="hidden" id="componentesField"><legend class="font-semibold text-lg text-slate-700 mt-6 mb-4 border-b pb-2">Status dos Componentes</legend><div id="components" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></fieldset>
-                    <button type="submit" class="hidden w-full mt-8 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1" id="enviarBtn">
-                        <i class="fas fa-paper-plane" style="margin-right: 8px;"></i>Enviar Teste
+                    <fieldset class="hidden" id="componentesField">
+                        <legend class="font-semibold text-lg text-slate-700 mt-6 mb-4">Status dos Componentes</legend>
+                        <div id="components" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    </fieldset>
+                    <button type="submit" class="hidden w-full mt-8 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1" id="enviarBtn">
+                        <i class="fas fa-paper-plane" style="margin-right: 8px;"></i>Enviar Registro
                     </button>
                 </form>
                 <div id="status" aria-live="polite" class="text-center mt-4"></div>
             </div>
-            <button class="feedback-btn" id="feedbackBtn" title="Enviar Feedback"> <i class="fas fa-bullhorn"></i> </button>
         </main>
     </div>
     
@@ -374,21 +291,16 @@
         <div class="modal-content">
             <h2 class="text-xl font-bold font-poppins text-slate-800"><i class="fas fa-question-circle text-blue-500 mr-2"></i>Confirmar Envio?</h2>
             <p class="text-slate-600">Revise os dados se necessário. Deseja prosseguir?</p>
-            
             <div class="field mt-4">
                 <label for="observacao" class="font-semibold">Observação Geral (opcional)</label>
                 <textarea id="observacao" placeholder="Adicione qualquer observação relevante..." class="mt-1 block w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md"></textarea>
             </div>
-
-            <!-- Camera/Photo Upload Section -->
             <h3 class="text-lg font-semibold text-slate-700 mt-6 mb-2">Anexar Fotos:</h3>
             <div class="flex flex-wrap gap-3 justify-center">
                 <button type="button" id="openCameraButton" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors duration-200 shadow-md">
                     <i class="fas fa-camera mr-2"></i>Abrir Câmera
                 </button>
             </div>
-
-            <!-- Camera Container -->
             <div id="cameraContainer" class="hidden my-4 max-w-sm mx-auto rounded-lg shadow-lg overflow-hidden border-2 border-gray-300">
                 <video id="cameraPreview" class="w-full h-auto block rounded-t-lg" playsinline></video>
                 <div id="captureControls" class="flex justify-center gap-3 p-3 bg-gray-100 rounded-b-lg">
@@ -396,16 +308,11 @@
                     <button id="cancelCameraBtn" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors duration-200">Cancelar</button>
                 </div>
             </div>
-
-            <!-- Thumbnails Area -->
             <h3 class="text-base font-semibold text-slate-700 mt-4">Fotos selecionadas:</h3>
             <div id="thumbnails" class="flex flex-wrap gap-3 justify-center mt-2 p-2 bg-white rounded-md border border-gray-200 min-h-[100px] items-center">
                 <span class="no-photos text-slate-500 italic">Nenhuma foto selecionada ainda</span>
             </div>
-
-            <!-- Loading Message for Photo Upload -->
             <div id="photoLoadingMessage" class="hidden mt-4 p-3 bg-blue-100 text-blue-800 rounded-lg text-center font-semibold">Enviando fotos... Por favor, aguarde.</div>
-
             <div class="flex justify-end gap-4 mt-6">
                 <button type="button" class="bg-slate-200 px-4 py-2 rounded-lg text-slate-700 hover:bg-slate-300 transition-colors" id="cancelSend">Cancelar</button>
                 <button type="button" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" id="confirmSend">Confirmar</button>
@@ -413,18 +320,6 @@
         </div>
     </div>
 
-    <div class="modal" id="feedbackModal">
-        <div class="modal-content">
-            <h2 class="text-xl font-bold font-poppins text-slate-800"><i class="fas fa-bullhorn text-amber-500 mr-2"></i>Enviar Feedback</h2>
-            <p class="text-slate-600">Compartilhe suas sugestões, bugs ou melhorias.</p>
-            <div class="field mt-4"><label for="feedbackType" class="font-semibold">Tipo</label><select id="feedbackType" class="mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md"><option value="bug">Bug / Erro</option><option value="melhoria">Sugestão de Melhoria</option><option value="outros">Outros</option></select></div>
-            <div class="field mt-2"><label for="feedbackDescription" class="font-semibold">Descrição</label><textarea id="feedbackDescription" placeholder="Descreva em detalhes..." class="mt-1 block w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-md"></textarea></div>
-            <div id="feedbackStatus" aria-live="polite"></div>
-            <div class="flex justify-end gap-4 mt-4"><button type="button" class="bg-slate-200 px-4 py-2 rounded-lg" id="cancelFeedback">Cancelar</button><button type="button" class="bg-amber-500 text-white px-4 py-2 rounded-lg" id="submitFeedbackBtn">Enviar</button></div>
-        </div>
-    </div>
-
-    <!-- NEW MODAL for N/A confirmation -->
     <div class="modal" id="naConfirmationModal">
         <div class="modal-content">
             <h2 class="text-xl font-bold font-poppins text-red-500"><i class="fas fa-exclamation-triangle mr-2"></i>Atenção!</h2>
@@ -436,8 +331,6 @@
         </div>
     </div>
 
-
-    <!-- Animated Confirmation (outside modals, fixed position) -->
     <div id="animatedConfirmation">
         <span class="icon"></span>
         <p class="message"></p>
@@ -445,360 +338,1241 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- ESTADO E CONFIGURAÇÃO ---
         let globalTesterName = '';
         let recallAppInitialized = false;
-        let currentTestId = null; // Variável para armazenar o ID único do teste atual
-        let longPressTimer = null; // Timer para a detecção de long press
-        const LONG_PRESS_THRESHOLD = 500; // Milissegundos para considerar um long press (0.5 segundos)
-
-        // Variáveis para o bloqueio do cliente
+        let currentTestId = null;
         let isClientLocked = false;
         let lockedClientName = '';
+        let currentMode = 'Recall';
 
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyE4h4LL3vk8n0m2A0C3p3n6Plz9w9YV0Ip_N8CpBpIk9VRKQmSkIWmzDL05XgdVKmlmw/exec';
-        // URL para o Google Apps Script de upload de fotos. Certifique-se de que este script esteja ativo e configurado corretamente.
-        const PHOTO_UPLOAD_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyon32vtTfnuG0DcdLiRJb5TK9fPzVHcOnULufkyV9lEWNIFBhz-oyAgCNjY6gBtoJf/exec";
+        const SCRIPT_URL = '<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Análise - Central de Qualidade</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <!-- FIX: Updated the datalabels plugin to a more recent stable version to fix the event handler error. -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/plugins/ranges.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <style>
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+        }
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+        .chart-container { position: relative; width: 100%; height: 320px; }
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
+        
+        /* Estilo da aba ativa */
+        .tab-active { border-color: #3b82f6; color: #3b82f6; background-color: #eff6ff; }
+        
+        /* Overlay de carregamento com efeito de blur */
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex; justify-content: center; align-items: center; 
+            z-index: 9999;
+            transition: opacity 0.3s;
+        }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .spinner {
+            width: 56px; height: 56px;
+            border: 6px solid #d1d5db;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        /* Estilos do modal de confirmação */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(30, 41, 59, 0.6);
+            display: none; justify-content: center; align-items: center;
+            z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.35s ease;
+        }
+        .modal.visible { display: flex; opacity: 1; visibility: visible; }
+        .modal-content {
+            background: #fff; padding: 35px; border-radius: 18px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            width: 90%; max-width: 450px;
+            transform: translateY(30px) scale(0.95); opacity: 0;
+            transition: transform 0.35s ease, opacity 0.35s ease;
+        }
+        .modal.visible .modal-content { transform: translateY(0) scale(1); opacity: 1; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0) scale(1); } 20%, 80% { transform: translate3d(2px, 0, 0) scale(1); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0) scale(1); } 40%, 60% { transform: translate3d(4px, 0, 0) scale(1); } }
+        .shake { animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both; }
 
-        const componentesConfig = [ 
-            { id: 'aht10', label: 'AHT10' }, { id: 'botao_esquerdo', label: 'Botão Esquerdo' }, { id: 'botao_central', label: 'Botão Central' }, 
-            { id: 'botao_direito', label: 'Botão Direito' }, { id: 'botao_reset', label: 'Botão Reset' }, { id: 'certificado', label: 'Certificado' }, 
-            { id: 'conector_mola', label: 'Conector Mola' }, { id: 'esp32', label: 'ESP32' }, { id: 'display', label: 'Display' }, { id: 'led_azul', label: 'LED Azul' }, 
-            { id: 'ledrgb', label: 'LED RGB' }, { id: 'ldr', label: 'LDR' }, { id: 'ntc', label: 'NTC' }, { id: 'relay', label: 'Relay' }, { id: 'tm1637', label: 'TM1637' }, 
-            { id: 'watchdog', label: 'Watchdog' }, { id: 'serigrafia', label: 'Serigrafia' } 
-        ];
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <header class="bg-white/80 backdrop-blur-sm shadow-sm w-full z-20 flex-shrink-0 sticky top-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-chart-pie text-3xl text-blue-600"></i>
+                <h1 class="text-xl md:text-2xl font-bold text-slate-800 font-poppins">Painel de Análise</h1>
+            </div>
+            <button id="closeTabBtn" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center gap-2">
+                <i class="fas fa-arrow-left"></i>
+                <span>Voltar ao Menu</span>
+            </button>
+        </div>
+    </header>
+
+    <main id="painel-container" class="flex-grow">
+        <div id="app-painel" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 text-slate-800">
+            <nav id="main-tabs" class="flex border-b border-slate-200 mb-8 overflow-x-auto">
+                <button data-tab="dashboard" class="flex-shrink-0 py-3 px-5 font-semibold text-slate-500 border-b-2 border-transparent hover:border-slate-300 hover:text-slate-700 transition-all duration-200 tab-active"><i class="fas fa-chart-pie mr-2"></i>Análise de Qualidade</button>
+                <button data-tab="history" class="flex-shrink-0 py-3 px-5 font-semibold text-slate-500 border-b-2 border-transparent hover:border-slate-300 hover:text-slate-700 transition-all duration-200"><i class="fas fa-history mr-2"></i>Histórico de Testes</button>
+                <button data-tab="time-analysis" class="flex-shrink-0 py-3 px-5 font-semibold text-slate-500 border-b-2 border-transparent hover:border-slate-300 hover:text-slate-700 transition-all duration-200"><i class="fas fa-chart-line mr-2"></i>Análise Temporal</button>
+                <button data-tab="device-details" class="flex-shrink-0 py-3 px-5 font-semibold text-slate-500 border-b-2 border-transparent hover:border-slate-300 hover:text-slate-700 transition-all duration-200 hidden"><i class="fas fa-microchip mr-2"></i>Detalhes</button>
+            </nav>
+            
+            <div id="painel-main-content">
+                <div id="dashboard-content">
+                    <section id="analytics-overview-section">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                            <div><h2 class="text-2xl font-bold text-slate-800 font-poppins">Visão Geral da Qualidade</h2><p class="text-slate-500 mt-1">Resultados e tendências dos testes registrados.</p></div>
+                            <div class="flex items-center gap-2 mt-3 sm:mt-0">
+                                <button id="generateReportBtn" class="text-sm bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center gap-2 shadow-sm"><i class="fas fa-file-pdf"></i>Gerar Relatório</button>
+                                <button id="refresh-analytics" class="text-sm bg-white border border-slate-300 text-slate-700 font-semibold px-4 py-2 rounded-lg hover:bg-slate-50 transition-all duration-200 flex items-center gap-2 shadow-sm"><i class="fas fa-sync-alt"></i>Atualizar Dados</button>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm mb-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-semibold text-slate-800 font-poppins">Filtros de Análise</h3>
+                                <button id="clearFiltersBtn" class="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"><i class="fas fa-eraser mr-1"></i>Limpar Filtros</button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <div>
+                                    <label for="sourceFilter" class="block text-sm font-medium text-slate-700 mb-1">Fonte de Dados:</label>
+                                    <select id="sourceFilter" class="w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <option value="all" selected>Todas as Fontes</option>
+                                        <option value="Página1">Página1 (Produção)</option>
+                                        <option value="Página2">Página2 (Testes)</option>
+                                    </select>
+                                </div>
+                                <div><label for="modelFilter" class="block text-sm font-medium text-slate-700 mb-1">Modelo:</label><select id="modelFilter" class="w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></select></div>
+                                <div><label for="clientFilter" class="block text-sm font-medium text-slate-700 mb-1">Cliente:</label><select id="clientFilter" class="w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></select></div>
+                                <div><label for="dateRangePicker" class="block text-sm font-medium text-slate-700 mb-1">Período:</label><input id="dateRangePicker" type="text" class="w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 cursor-pointer" placeholder="Selecione um período"></div>
+                            </div>
+                        </div>
+                        <div id="charts-for-export" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div id="overallStatusChartContainer" class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm"><h3 class="font-semibold text-slate-800 mb-4 text-center font-poppins">Resumo Geral</h3><div class="chart-container"><canvas id="overallStatusChart"></canvas></div></div>
+                            <div id="failuresByComponentChartContainer" class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm"><h3 class="font-semibold text-slate-800 mb-4 font-poppins">Top Falhas por Componente</h3><div class="chart-container" style="max-width: none;"><canvas id="failuresByComponentChart"></canvas></div></div>
+                            <div id="testsByModelChartContainer" class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm"><h3 class="font-semibold text-slate-800 mb-4 font-poppins">Testes por Modelo</h3><div class="chart-container" style="max-width: 800px; height: 350px;"><canvas id="testsByModelChart"></canvas></div></div>
+                            <div id="testsByClientChartContainer" class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm"><h3 class="font-semibold text-slate-800 mb-4 font-poppins">Testes por Cliente</h3><p class="text-slate-500 text-sm mb-4">Clique em uma barra para ver a análise detalhada por cliente.</p><div class="chart-container" style="max-width: none; height: 400px;"><canvas id="testsByClientChart"></canvas></div></div>
+                        </div>
+                    </section>
+                    <section id="client-detail-analytics-section" class="hidden bg-white p-6 sm:p-8 rounded-2xl shadow-sm">
+                        <div class="flex flex-col sm:flex-row justify-between items-center mb-2">
+                           <h2 id="client-detail-title" class="text-xl font-bold text-slate-800 font-poppins"></h2>
+                           <div class="flex items-center gap-2 mt-3 sm:mt-0">
+                                <button id="backToOverviewBtn" class="bg-slate-200 text-slate-800 font-semibold px-4 py-2 rounded-lg hover:bg-slate-300 transition-all"><i class="fas fa-arrow-left mr-2"></i>Voltar</button>
+                            </div>
+                        </div>
+                        <p class="text-slate-500 mb-6">Análise detalhada para o cliente selecionado.</p>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                            <div class="bg-slate-50 p-6 rounded-xl shadow-inner"><h3 class="font-semibold text-slate-800 mb-4 font-poppins">Falhas por Componente (Cliente)</h3><div class="chart-container"><canvas id="clientFailuresByComponentChart"></canvas></div></div>
+                            <div class="bg-slate-50 p-6 rounded-xl shadow-inner"><h3 class="font-semibold text-slate-800 mb-4 font-poppins">Modelos Testados (Cliente)</h3><div class="chart-container"><canvas id="clientTestsByModelChart"></canvas></div></div>
+                        </div>
+                    </section>
+                </div>
+                <div id="history-content" class="hidden">
+                    <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                            <div><h2 class="text-2xl font-bold text-slate-800 font-poppins">Histórico de Testes</h2><p class="text-slate-500 mt-1">Consulte, pesquise e gerencie todos os registros de testes.</p></div>
+                            <div class="relative mt-4 sm:mt-0"><input type="text" id="searchInput" placeholder="Buscar por cliente ou modelo..." class="w-full sm:w-64 pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"><i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i></div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-200">
+                                <thead class="bg-slate-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Data</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Modelo</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Cliente</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status Geral</th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Falhas</th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historyTableBody" class="bg-white divide-y divide-slate-200"></tbody>
+                            </table>
+                            <p id="no-results" class="text-center py-8 text-slate-500 hidden">Nenhum registro encontrado.</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="time-analysis-content" class="hidden">
+                    <section class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                            <div><h2 class="text-2xl font-bold text-slate-800 font-poppins">Análise Temporal de Testes</h2><p class="text-slate-500 mt-1">Visualize a tendência de testes realizados ao longo do tempo.</p></div>
+                                <div class="flex items-center gap-2 mt-4 sm:mt-0">
+                                    <div><label for="timeAnalysisPeriod" class="sr-only">Período</label><select id="timeAnalysisPeriod" class="rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"><option value="7">Últimos 7 Dias</option><option value="30" selected>Últimos 30 Dias</option><option value="90">Últimos 90 Dias</option></select></div>
+                                </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+                            <div class="bg-slate-100 p-5 rounded-xl"><h4 class="text-sm font-medium text-slate-500">Total de Testes</h4><p id="kpi-total-tests" class="text-3xl font-bold text-slate-800 mt-1">0</p></div>
+                            <div class="bg-green-100 border border-green-200 p-5 rounded-xl"><h4 class="text-sm font-medium text-green-700">Testes OK</h4><p id="kpi-ok-tests" class="text-3xl font-bold text-green-800 mt-1">0</p></div>
+                            <div class="bg-red-100 border border-red-200 p-5 rounded-xl"><h4 class="text-sm font-medium text-red-700">Testes com Falha</h4><p id="kpi-failed-tests" class="text-3xl font-bold text-red-800 mt-1">0</p></div>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="lg:col-span-2 bg-slate-50 p-6 rounded-xl shadow-inner">
+                                <h3 class="font-semibold text-slate-800 mb-4 font-poppins">Volume e Status de Testes por Dia</h3>
+                                <div class="chart-container" style="height: 400px;"><canvas id="dailyTestsStatusChart"></canvas></div>
+                            </div>
+                            <div class="lg:col-span-1 bg-slate-50 p-6 rounded-xl shadow-inner">
+                                <h3 class="font-semibold text-slate-800 mb-4 text-center font-poppins">Resumo do Período</h3>
+                                <div class="chart-container" style="height: 400px;"><canvas id="temporalStatusSummaryChart"></canvas></div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+                <div id="device-details-content" class="hidden">
+                    <section class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                            <div><h2 id="device-details-title" class="text-2xl font-bold text-slate-800 font-poppins">Detalhes dos Dispositivos</h2><p id="device-details-subtitle" class="text-slate-500 mt-1"></p></div>
+                                <div class="flex items-center gap-2 mt-3 sm:mt-0">
+                                    <button id="backToDashboardBtn" class="bg-slate-200 text-slate-800 font-semibold px-4 py-2 rounded-lg hover:bg-slate-300 transition-all"><i class="fas fa-arrow-left mr-2"></i>Voltar ao Painel</button>
+                                </div>
+                        </div>
+                        <div id="device-details-failure-chart-container" class="bg-slate-50 p-6 rounded-xl shadow-inner mb-8"><h3 class="font-semibold text-slate-800 mb-4 font-poppins">Falhas por Componente (nesta seleção)</h3><div class="chart-container" style="max-width: none; height: 350px;"><canvas id="deviceDetailsFailureChart"></canvas></div></div>
+                        <div id="device-details-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+        <div id="loading-overlay" class="loading-overlay hidden opacity-0"><div class="spinner"></div></div>
+        
+        <div id="confirm-modal" class="modal">
+            <div class="modal-content">
+                <div class="flex justify-center items-center w-12 h-12 rounded-full mx-auto mb-4" id="confirm-icon-container"><i class="fas text-2xl text-white" id="confirm-icon"></i></div>
+                <h2 class="text-2xl font-bold text-center text-slate-800 font-poppins" id="confirm-title"></h2>
+                <p class="text-center text-slate-500 mt-2 mb-6" id="confirm-message"></p>
+                <div id="password-section" class="hidden my-4">
+                    <label for="deletePassword" class="block text-sm font-medium text-slate-700 mb-1">Senha de Exclusão</label>
+                    <input type="password" id="deletePassword" class="w-full rounded-md border-slate-300 shadow-sm focus:border-red-500 focus:ring-red-500" placeholder="Digite a senha">
+                    <p id="password-error" class="text-red-500 text-sm mt-2 hidden">Senha incorreta.</p>
+                </div>
+                <div class="flex justify-center gap-4">
+                    <button id="cancel-btn" class="w-full bg-slate-200 text-slate-800 font-semibold py-2.5 rounded-lg hover:bg-slate-300 transition-all">Cancelar</button>
+                    <button id="confirm-btn" class="w-full text-white font-semibold py-2.5 rounded-lg transition-all">Confirmar</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="history-details-modal" class="modal">
+            <div class="modal-content">
+                <h2 class="text-2xl font-bold text-slate-800 font-poppins mb-2" id="history-details-title"></h2>
+                <p class="text-sm text-slate-500 mb-4" id="history-details-subtitle"></p>
+                <div class="max-h-80 overflow-y-auto pr-2">
+                    <ul id="history-details-list" class="space-y-2"></ul>
+                </div>
+                <button id="history-details-close-btn" class="mt-6 w-full bg-slate-600 text-white font-semibold py-2.5 rounded-lg hover:bg-slate-700 transition-all">Fechar</button>
+            </div>
+        </div>
+
+        <div id="report-name-modal" class="modal">
+            <div class="modal-content">
+                <div class="flex justify-center items-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 mx-auto mb-4">
+                    <i class="fas fa-user text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-center text-slate-800 font-poppins">Identificação do Relatório</h2>
+                <p class="text-center text-slate-500 mt-2 mb-6">Por favor, insira seu nome para o registro.</p>
+                <div class="my-4">
+                    <label for="reporterName" class="block text-sm font-medium text-slate-700 mb-1">Seu Nome:</label>
+                    <input type="text" id="reporterName" class="w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Digite seu nome completo">
+                    <p id="name-error" class="text-red-500 text-sm mt-2 hidden">Por favor, insira um nome.</p>
+                </div>
+                <div class="flex justify-center gap-4">
+                    <button id="cancel-name-btn" class="w-full bg-slate-200 text-slate-800 font-semibold py-2.5 rounded-lg hover:bg-slate-300 transition-all">Cancelar</button>
+                    <button id="confirm-name-btn" class="w-full bg-blue-600 text-white font-semibold py-2.5 rounded-lg hover:bg-blue-700 transition-all">Confirmar e Gerar</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- CONFIGURAÇÃO GLOBAL DO SCRIPT ---
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxH4MeVSIynwUd4ZHb-dvMYfsf43Jl21iAg0FBSJP8eYDdtcPflyXhyNUvFltEPCdA-NA/exec';
+        const DELETE_PASSWORD = 'sm4r7ly';
+        const STATUS_NA = 'N/A';
+        const STATUS_OK = 'OK';
+        const STATUS_FALHA = 'FALHA';
+        const ALL_COMPONENTS = [
+            'aht10', 'botao_esquerdo', 'botao_central', 'botao_direito', 'botao_reset', 
+            'certificado', 'conector_mola', 'esp32', 'display', 'led_azul', 
+            'ledrgb', 'ldr', 'ntc', 'relay', 'tm1637', 'watchdog', 'serigrafia'
+        ].map(id => ({ id, label: id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }));
+
+        // --- ESTADO DA APLICAÇÃO ---
+        let allRecords = []; 
+        let charts = {};
+        let currentActiveTab = 'dashboard'; 
+        let datePicker;
+
+        // --- SELEÇÃO DE ELEMENTOS DO DOM ---
+        const closeTabBtn = document.getElementById('closeTabBtn');
+        const painelContainer = document.getElementById('painel-container');
+        const elements = {
+            sourceFilter: painelContainer.querySelector('#sourceFilter'),
+            modelFilter: painelContainer.querySelector('#modelFilter'),
+            clientFilter: painelContainer.querySelector('#clientFilter'),
+            clearFiltersBtn: painelContainer.querySelector('#clearFiltersBtn'),
+            loadingOverlay: document.querySelector('#loading-overlay'),
+            searchInput: painelContainer.querySelector('#searchInput'),
+            backToDashboardBtn: painelContainer.querySelector('#backToDashboardBtn'),
+            timeAnalysisPeriod: painelContainer.querySelector('#timeAnalysisPeriod'),
+            tabs: painelContainer.querySelectorAll('#main-tabs button'),
+            contents: {
+                dashboard: painelContainer.querySelector('#dashboard-content'),
+                history: painelContainer.querySelector('#history-content'),
+                'time-analysis': painelContainer.querySelector('#time-analysis-content'),
+                'device-details': painelContainer.querySelector('#device-details-content')
+            },
+            historyTableBody: painelContainer.querySelector('#historyTableBody'),
+            noResults: painelContainer.querySelector('#no-results'),
+            kpis: {
+                total: painelContainer.querySelector('#kpi-total-tests'),
+                ok: painelContainer.querySelector('#kpi-ok-tests'),
+                failed: painelContainer.querySelector('#kpi-failed-tests')
+            },
+            historyDetailsModal: document.getElementById('history-details-modal'),
+            historyDetailsCloseBtn: document.getElementById('history-details-close-btn')
+        };
+
+        // --- INICIALIZAÇÃO ---
+        init();
+
+        function init() {
+            Chart.register(ChartDataLabels);
+            setupEventListeners();
+            setupDateFilters(); 
+            fetchAndDisplayHistory(); 
+        }
+
+        // --- FUNÇÕES DE LÓGICA ---
+        
+        async function fetchAndDisplayHistory(isRefresh = false) {
+            const refreshButton = document.getElementById('refresh-analytics');
+            const selectedSource = elements.sourceFilter.value;
+            
+            if (!isRefresh) {
+                showLoading();
+            } else {
+                refreshButton.disabled = true;
+                refreshButton.querySelector('i').classList.add('fa-spin');
+            }
+            try {
+                const url = `${SCRIPT_URL}?sheet=${selectedSource}&v=${new Date().getTime()}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`A resposta da rede não foi 'ok': ${response.statusText}`);
+                allRecords = await response.json();
+                allRecords.sort((a, b) => new Date(b.data) - new Date(a.data));
+                
+                populateFilterOptions(allRecords); 
+                
+                if (!isRefresh) {
+                    if (datePicker && !datePicker.getStartDate()) {
+                        const end = new Date(); 
+                        const start = new Date(); 
+                        start.setDate(end.getDate() - 29); 
+                        datePicker.setDateRange(start, end, true);
+                    }
+                }
+                applyFiltersAndRender();
+            } catch (error) {
+                console.error('Erro ao buscar dados:', error);
+                if (elements.historyTableBody) elements.historyTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-red-500">Falha ao carregar dados: ${error.message}</td></tr>`;
+            } finally {
+                if (!isRefresh) {
+                    hideLoading();
+                } else {
+                    refreshButton.disabled = false;
+                    refreshButton.querySelector('i').classList.remove('fa-spin');
+                }
+            }
+        }
+        
+        function populateFilterOptions(records) {
+            const models = [...new Set(records.map(r => r.modelo).filter(Boolean))].sort();
+            const clients = [...new Set(records.map(r => r.cliente).filter(Boolean))].sort();
+            
+            const selectedModel = elements.modelFilter.value;
+            const selectedClient = elements.clientFilter.value;
+
+            elements.modelFilter.innerHTML = '<option value="">Todos os Modelos</option>' + models.map(m => `<option value="${m}">${m}</option>`).join('');
+            elements.clientFilter.innerHTML = '<option value="">Todos os Clientes</option>' + clients.map(c => `<option value="${c}">${c}</option>`).join('');
+
+            if (models.includes(selectedModel)) elements.modelFilter.value = selectedModel;
+            if (clients.includes(selectedClient)) elements.clientFilter.value = selectedClient;
+        }
+
+        function applyFiltersAndRender() {
+            const selectedModel = elements.modelFilter.value;
+            const selectedClient = elements.clientFilter.value;
+            const searchTerm = elements.searchInput.value.toLowerCase();
+            const startDate = datePicker?.getStartDate()?.dateInstance;
+            const endDate = datePicker?.getEndDate()?.dateInstance;
+            
+            let filteredRecords = allRecords;
+
+             if (currentActiveTab === 'history') {
+                 if (searchTerm) {
+                     filteredRecords = allRecords.filter(rec => 
+                         `${rec.cliente || ''} ${rec.modelo || ''}`.toLowerCase().includes(searchTerm)
+                     );
+                 }
+             } else {
+                 filteredRecords = allRecords.filter(record => {
+                     const recordDate = new Date(record.data);
+                     const matchesModel = !selectedModel || record.modelo === selectedModel;
+                     const matchesClient = !selectedClient || record.cliente === selectedClient;
+                     const matchesDate = !(startDate && endDate) || (recordDate >= startDate && recordDate <= new Date(endDate.getTime() + 86400000));
+                     return matchesModel && matchesClient && matchesDate;
+                 });
+             }
+
+
+            switch (currentActiveTab) {
+                case 'dashboard': renderDashboard(filteredRecords); break;
+                case 'history': renderHistoryTable(filteredRecords); break;
+                case 'time-analysis': renderTemporalAnalytics(filteredRecords); break; 
+            }
+        }
+        
+        function renderDashboard(records) {
+            painelContainer.querySelector('#analytics-overview-section').classList.remove('hidden');
+            painelContainer.querySelector('#client-detail-analytics-section').classList.add('hidden');
+
+            renderOverallStatusChart(records);
+            renderFailuresByComponentChart(records);
+            renderTestsByModelChart(records); 
+            renderTestsByClientChart(records);
+        }
+
+        function renderHistoryTable(records) {
+            if (!elements.historyTableBody || !elements.noResults) return;
+            elements.historyTableBody.innerHTML = '';
+            
+            if (records.length === 0) {
+                elements.noResults.classList.remove('hidden');
+                return;
+            }
+            elements.noResults.classList.add('hidden');
+            
+            records.forEach(rec => {
+                let failures = 0;
+                ALL_COMPONENTS.forEach(comp => {
+                    if (String(rec[comp.id]).startsWith(STATUS_FALHA)) failures++;
+                });
+
+                const statusBadge = failures > 0 
+                    ? `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Com Falha</span>` 
+                    : `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Aprovado</span>`;
+
+                const row = document.createElement('tr');
+                row.className = "hover:bg-slate-50 transition-colors";
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${new Date(rec.data).toLocaleString('pt-BR')}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${rec.modelo || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${rec.cliente || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${statusBadge}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center font-semibold ${failures > 0 ? 'text-red-600' : 'text-slate-500'}">${failures}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-4">
+                        <button data-record-date="${rec.data}" class="details-btn text-blue-600 hover:text-blue-800 transition-colors" title="Ver Detalhes"><i class="fas fa-eye"></i></button>
+                        <button data-record-date="${rec.data}" class="delete-btn text-slate-500 hover:text-red-600 transition-colors" title="Apagar Registro"><i class="fas fa-trash-alt"></i></button>
+                    </td>`;
+                elements.historyTableBody.appendChild(row);
+            });
+
+            painelContainer.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const recordDate = e.currentTarget.dataset.recordDate;
+                    promptForDelete(recordDate);
+                });
+            });
+
+            painelContainer.querySelectorAll('.details-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const recordDate = e.currentTarget.dataset.recordDate;
+                    showHistoryDetails(recordDate);
+                });
+            });
+        }
+        
+        function renderTemporalAnalytics(records) {
+            const periodDays = parseInt(elements.timeAnalysisPeriod.value, 10);
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(endDate.getDate() - (periodDays - 1));
+            startDate.setHours(0, 0, 0, 0);
+
+            const periodRecords = records.filter(r => new Date(r.data) >= startDate && new Date(r.data) <= endDate);
+
+            const totalTests = periodRecords.length;
+            const okTests = periodRecords.filter(r => getDeviceStatus(r) === STATUS_OK).length;
+            const failedTests = totalTests - okTests;
+            
+            elements.kpis.total.textContent = totalTests;
+            elements.kpis.ok.textContent = okTests;
+            elements.kpis.failed.textContent = failedTests;
+
+            const dailyStatusCounts = {};
+            for (let i = 0; i < periodDays; i++) {
+                const d = new Date(startDate);
+                d.setDate(startDate.getDate() + i);
+                const dateKey = d.toISOString().slice(0, 10);
+                dailyStatusCounts[dateKey] = { OK: 0, FALHA: 0 };
+            }
+            
+            periodRecords.forEach(rec => {
+                const dateKey = new Date(rec.data).toISOString().slice(0, 10);
+                if (dailyStatusCounts.hasOwnProperty(dateKey)) {
+                    const status = getDeviceStatus(rec);
+                    if (status === STATUS_OK) {
+                        dailyStatusCounts[dateKey].OK++;
+                    } else if (status === STATUS_FALHA) {
+                        dailyStatusCounts[dateKey].FALHA++;
+                    }
+                }
+            });
+
+            renderDailyTestsStatusChart(dailyStatusCounts);
+            renderTemporalStatusSummaryChart(okTests, failedTests);
+        }
+
+        function createOrUpdateChart(chartId, config) {
+            const ctx = painelContainer.querySelector(`#${chartId}`)?.getContext('2d');
+            if (!ctx) return;
+            if (charts[chartId]) charts[chartId].destroy();
+
+            config.options = { ...config.options, maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { font: { family: "'Inter', sans-serif" } }, ...config.options?.plugins?.legend },
+                    tooltip: { bodyFont: { family: "'Inter', sans-serif" }, titleFont: { family: "'Poppins', sans-serif", weight: 'bold' }, ...config.options?.plugins?.tooltip },
+                    datalabels: { font: { family: "'Poppins', sans-serif", weight: 'bold' }, ...config.options?.plugins?.datalabels }
+                }
+            };
+            charts[chartId] = new Chart(ctx, config);
+        }
+
+        function renderOverallStatusChart(records) {
+            const relevantRecords = records.filter(rec => getDeviceStatus(rec) !== STATUS_NA);
+            const okCount = relevantRecords.filter(rec => getDeviceStatus(rec) === STATUS_OK).length;
+            const failCount = relevantRecords.length - okCount;
+            
+            createOrUpdateChart('overallStatusChart', { type: 'doughnut',
+                data: {
+                    labels: ['Dispositivos OK', 'Dispositivos com Falha'],
+                    datasets: [{ data: [okCount, failCount], backgroundColor: ['#14b8a6', '#f43f5e'], borderColor: '#fff', borderWidth: 4, hoverOffset: 10 }]
+                },
+                options: { cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        datalabels: {
+                            color: '#fff',
+                            textAlign: 'center',
+                            formatter: (value, context) => {
+                                if (value === 0) return '';
+                                const total = context.chart.data.datasets[0].data.reduce((s, v) => s + v, 0);
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : 0;
+                                return `${value}\n(${percentage}%)`;
+                            }, 
+                            font: { size: 14 }
+                        }
+                    },
+                    onClick: (e, elements) => {
+                        if (elements.length > 0) {
+                            const status = elements[0].index === 0 ? STATUS_OK : STATUS_FALHA;
+                            showDeviceStatusDetails(status, relevantRecords);
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderFailuresByComponentChart(records) {
+            const failureCounts = {};
+            records.forEach(rec => {
+                ALL_COMPONENTS.forEach(comp => {
+                    if (String(rec[comp.id]).startsWith(STATUS_FALHA)) {
+                        failureCounts[comp.label] = (failureCounts[comp.label] || 0) + 1;
+                    }
+                });
+            });
+            const sortedFailures = Object.entries(failureCounts).filter(([, count]) => count > 0).sort(([, a], [, b]) => b - a).slice(0, 7);
+
+            createOrUpdateChart('failuresByComponentChart', { type: 'bar',
+                data: {
+                    labels: sortedFailures.map(f => f[0]),
+                    datasets: [{ label: 'Nº de Falhas', data: sortedFailures.map(f => f[1]), backgroundColor: '#3b82f6', borderRadius: 6 }]
+                },
+                options: { indexAxis: 'y', plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'end', color: '#4B5563' } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+            });
+        }
+        
+        function renderTestsByModelChart(records) {
+            const modelCounts = {};
+            records.forEach(rec => { if (rec.modelo) modelCounts[rec.modelo] = (modelCounts[rec.modelo] || 0) + 1; });
+            const sortedModels = Object.entries(modelCounts).sort(([, a], [, b]) => b - a);
+            createOrUpdateChart('testsByModelChart', { type: 'bar',
+                data: {
+                    labels: sortedModels.map(m => m[0]),
+                    datasets: [{ label: 'Nº de Testes', data: sortedModels.map(m => m[1]), backgroundColor: ['#88D8B0', '#FFCC66', '#FF6B6B', '#C7D0D8', '#6A8EAE'], borderRadius: 6 }]
+                },
+                options: { plugins: { legend: { display: false }, datalabels: { color: '#ffffff', formatter: (v) => v > 0 ? v : '' } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+            });
+        }
+
+        function renderTestsByClientChart(records) {
+            const clientCounts = {};
+            records.forEach(rec => { clientCounts[rec.cliente || 'N/A'] = (clientCounts[rec.cliente || 'N/A'] || 0) + 1; });
+            const sortedClients = Object.entries(clientCounts).sort(([, a], [, b]) => b - a).slice(0, 10);
+            createOrUpdateChart('testsByClientChart', { type: 'bar',
+                data: {
+                    labels: sortedClients.map(c => c[0]),
+                    datasets: [{ label: 'Nº de Testes', data: sortedClients.map(c => c[1]), backgroundColor: '#60a5fa', borderRadius: 6 }]
+                },
+                options: { indexAxis: 'y', plugins: { legend: { display: false } },
+                    onClick: (e, elements) => {
+                        if (elements.length > 0) {
+                            const clientName = charts['testsByClientChart'].data.labels[elements[0].index];
+                            showClientAnalysis(clientName, records);
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderDailyTestsStatusChart(dailyStatusCounts) {
+            const labels = Object.keys(dailyStatusCounts).map(d => `${d.slice(8,10)}/${d.slice(5,7)}`);
+            const okData = Object.values(dailyStatusCounts).map(d => d.OK);
+            const failData = Object.values(dailyStatusCounts).map(d => d.FALHA);
+
+            createOrUpdateChart('dailyTestsStatusChart', {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Falha', data: failData, backgroundColor: '#f43f5e', borderRadius: 3 },
+                        { label: 'OK', data: okData, backgroundColor: '#14b8a6', borderRadius: 3 }
+                    ]
+                },
+                options: {
+                    plugins: { legend: { position: 'top' }, datalabels: { display: false } },
+                    scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } } },
+                    responsive: true
+                }
+            });
+        }
+
+        function renderTemporalStatusSummaryChart(okCount, failCount) {
+            createOrUpdateChart('temporalStatusSummaryChart', {
+                type: 'doughnut',
+                data: {
+                    labels: ['Dispositivos OK', 'Dispositivos com Falha'],
+                    datasets: [{ data: [okCount, failCount], backgroundColor: ['#14b8a6', '#f43f5e'], borderColor: '#f1f5f9', borderWidth: 4, hoverOffset: 10 }]
+                },
+                options: {
+                    cutout: '70%',
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            color: '#fff', textAlign: 'center',
+                            formatter: (value, context) => {
+                                if (value === 0) return '';
+                                const total = context.chart.data.datasets[0].data.reduce((s, v) => s + v, 0);
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : 0;
+                                return `${value}\n(${percentage}%)`;
+                            }, 
+                            font: { size: 14 }
+                        }
+                    }
+                }
+            });
+        }
+
+        function showClientAnalysis(clientName, allFilteredRecords) {
+            const clientRecords = allFilteredRecords.filter(record => (record.cliente || 'N/A') === clientName);
+            painelContainer.querySelector('#client-detail-title').textContent = `Análise para: ${clientName}`;
+            painelContainer.querySelector('#analytics-overview-section').classList.add('hidden');
+            painelContainer.querySelector('#client-detail-analytics-section').classList.remove('hidden');
+            renderClientFailuresByComponentChart(clientRecords);
+            renderClientTestsByModelChart(clientRecords);
+        }
+
+        function renderClientFailuresByComponentChart(records) {
+            const failureCounts = {};
+            records.forEach(rec => { ALL_COMPONENTS.forEach(comp => { if (String(rec[comp.id]).startsWith(STATUS_FALHA)) failureCounts[comp.label] = (failureCounts[comp.label] || 0) + 1; }); });
+            const sortedFailures = Object.entries(failureCounts).filter(([, count]) => count > 0).sort(([, a], [, b]) => b - a);
+            createOrUpdateChart('clientFailuresByComponentChart', { type: 'bar', data: { labels: sortedFailures.map(f => f[0]), datasets: [{ label: 'Nº de Falhas', data: sortedFailures.map(f => f[1]), backgroundColor: '#ef4444' }] }, options: { indexAxis: 'y', plugins: { legend: { display: false } } } });
+        }
+
+        function renderClientTestsByModelChart(records) {
+            const modelCounts = {};
+            records.forEach(rec => { if (rec.modelo) modelCounts[rec.modelo] = (modelCounts[rec.modelo] || 0) + 1; });
+            createOrUpdateChart('clientTestsByModelChart', { type: 'pie', data: { labels: Object.keys(modelCounts), datasets: [{ data: Object.values(modelCounts), backgroundColor: ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe'] }] }, options: { plugins: { legend: { position: 'bottom' }, datalabels: { color: '#fff' } } } });
+        }
+        
+        function showDeviceStatusDetails(statusType, recordsToShow, componentIdFilter = null) {
+            let filteredDevices = recordsToShow.filter(rec => getDeviceStatus(rec) === statusType);
+            if (componentIdFilter) filteredDevices = filteredDevices.filter(rec => String(rec[componentIdFilter]).startsWith(STATUS_FALHA));
+
+            const statusText = statusType === STATUS_OK ? 'OK' : 'com Falha';
+            const componentLabel = componentIdFilter ? ALL_COMPONENTS.find(c => c.id === componentIdFilter)?.label : '';
+            painelContainer.querySelector('#device-details-title').textContent = `Dispositivos ${statusText}${componentIdFilter ? ` (Falha em ${componentLabel})` : ''}`;
+            painelContainer.querySelector('#device-details-subtitle').textContent = `${filteredDevices.length} dispositivo(s) encontrado(s).`;
+            
+            const listEl = painelContainer.querySelector('#device-details-list');
+            listEl.innerHTML = '';
+            
+            if (filteredDevices.length === 0) {
+                listEl.innerHTML = '<p class="text-slate-500 col-span-full text-center py-8">Nenhum dispositivo encontrado.</p>';
+            } else {
+                filteredDevices.forEach(device => {
+                    const componentListHtml = ALL_COMPONENTS.filter(comp => device.hasOwnProperty(comp.id)).map(comp => {
+                        const status = String(device[comp.id]);
+                        let color = status.startsWith(STATUS_OK) ? 'text-green-600' : (status.startsWith(STATUS_FALHA) ? 'text-red-600' : 'text-slate-500');
+                        return `<li class="flex justify-between text-sm py-1 border-b"><span class="font-semibold">${comp.label}:</span><span class="${color}">${status}</span></li>`;
+                    }).join('');
+                    const card = document.createElement('div');
+                    card.className = 'bg-slate-50 p-4 rounded-lg shadow-sm';
+                    card.innerHTML = `<h4 class="font-bold">${device.modelo}</h4><p class="text-sm text-slate-500 mb-2">${device.cliente}</p><ul>${componentListHtml}</ul>`;
+                    listEl.appendChild(card);
+                });
+            }
+            
+            if (statusType === STATUS_FALHA) {
+                painelContainer.querySelector('#device-details-failure-chart-container').classList.remove('hidden');
+                renderDeviceDetailsFailureChart(recordsToShow.filter(rec => getDeviceStatus(rec) === STATUS_FALHA), failedRecords => showDeviceStatusDetails(STATUS_FALHA, failedRecords, null));
+            } else {
+                painelContainer.querySelector('#device-details-failure-chart-container').classList.add('hidden');
+            }
+
+            switchTab('device-details');
+        }
+
+        function renderDeviceDetailsFailureChart(failedRecords, clickCallback) {
+             const failureCounts = {};
+               failedRecords.forEach(rec => { ALL_COMPONENTS.forEach(comp => { if (String(rec[comp.id]).startsWith(STATUS_FALHA)) failureCounts[comp.label] = (failureCounts[comp.label] || 0) + 1; }); });
+            const sortedFailures = Object.entries(failureCounts).filter(([, count]) => count > 0).sort(([, a], [, b]) => b - a);
+            
+            createOrUpdateChart('deviceDetailsFailureChart', { type: 'bar', data: { labels: sortedFailures.map(f => f[0]), datasets: [{ label: 'Nº de Falhas', data: sortedFailures.map(f => f[1]), backgroundColor: '#f43f5e' }] },
+                options: { indexAxis: 'y', plugins: { legend: { display: false } },
+                    onClick: (e, elements) => {
+                        if (elements.length > 0) {
+                            const componentName = charts['deviceDetailsFailureChart'].data.labels[elements[0].index];
+                            const componentId = ALL_COMPONENTS.find(c => c.label === componentName)?.id;
+                            showDeviceStatusDetails(STATUS_FALHA, failedRecords, componentId);
+                        }
+                    }
+                }
+            });
+        }
+
+
+        // --- FUNÇÕES DE NAVEGAÇÃO E UI ---
+
+        function switchTab(tabName) {
+            currentActiveTab = tabName;
+            elements.tabs.forEach(tab => tab.classList.toggle('tab-active', tab.dataset.tab === tabName));
+            Object.entries(elements.contents).forEach(([name, content]) => content?.classList.toggle('hidden', name !== tabName));
+            
+            document.getElementById('generateReportBtn').style.display = (tabName === 'dashboard') ? 'flex' : 'none';
+
+            applyFiltersAndRender();
+        }
+
+        function showLoading() {
+            elements.loadingOverlay.classList.remove('hidden', 'opacity-0');
+        }
+
+        function hideLoading() {
+            elements.loadingOverlay.classList.add('opacity-0');
+            setTimeout(() => elements.loadingOverlay.classList.add('hidden'), 300);
+        }
+        
+        function promptForDelete(recordDate) {
+            const modal = document.querySelector('#confirm-modal');
+            modal.querySelector('#confirm-title').textContent = 'Apagar Registro?';
+            modal.querySelector('#confirm-message').textContent = 'Esta ação é irreversível. Para confirmar, por favor, insira a senha de exclusão.';
+            modal.querySelector('#confirm-icon').className = 'fas fa-exclamation-triangle text-2xl text-white';
+            modal.querySelector('#confirm-icon-container').className = 'flex justify-center items-center w-12 h-12 rounded-full mx-auto mb-4 bg-red-500';
+
+            const passwordSection = modal.querySelector('#password-section');
+            const passwordInput = modal.querySelector('#deletePassword');
+            const passwordError = modal.querySelector('#password-error');
+            const modalContent = modal.querySelector('.modal-content');
+            
+            passwordSection.classList.remove('hidden');
+            passwordInput.value = '';
+            passwordError.classList.add('hidden');
+            
+            const confirmBtn = modal.querySelector('#confirm-btn');
+            confirmBtn.textContent = 'Sim, Apagar';
+            confirmBtn.className = `w-full text-white font-semibold py-2.5 rounded-lg transition-all bg-red-600 hover:bg-red-700`;
+
+            const newConfirmBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+            newConfirmBtn.addEventListener('click', () => {
+                if (passwordInput.value === DELETE_PASSWORD) {
+                    modal.classList.remove('visible');
+                    deleteRecord(recordDate);
+                } else {
+                    passwordError.classList.remove('hidden');
+                    modalContent.classList.add('shake');
+                    setTimeout(() => modalContent.classList.remove('shake'), 820);
+                }
+            });
+            
+            modal.querySelector('#cancel-btn').onclick = () => modal.classList.remove('visible');
+            modal.classList.add('visible');
+            setTimeout(() => passwordInput.focus(), 350);
+        }
+
+        function showHistoryDetails(recordDate) {
+            const record = allRecords.find(r => r.data === recordDate);
+            if (!record) return;
+
+            const modal = elements.historyDetailsModal;
+            modal.querySelector('#history-details-title').textContent = record.modelo || 'Dispositivo';
+            modal.querySelector('#history-details-subtitle').textContent = `Teste de ${new Date(record.data).toLocaleString('pt-BR')} para ${record.cliente || 'N/A'}`;
+
+            const listEl = modal.querySelector('#history-details-list');
+            listEl.innerHTML = '';
+            
+            const componentListHtml = ALL_COMPONENTS
+                .filter(comp => record.hasOwnProperty(comp.id))
+                .map(comp => {
+                    const status = String(record[comp.id]);
+                    let color = 'text-slate-500';
+                    let icon = 'fa-minus-circle';
+                    if (status.startsWith(STATUS_OK)) {
+                        color = 'text-green-600';
+                        icon = 'fa-check-circle';
+                    } else if (status.startsWith(STATUS_FALHA)) {
+                        color = 'text-red-600';
+                        icon = 'fa-times-circle';
+                    }
+                    return `<li class="flex justify-between items-center text-sm py-2 px-3 rounded-lg bg-slate-100">
+                                <span class="font-semibold text-slate-700">${comp.label}</span>
+                                <span class="font-bold ${color} flex items-center gap-2">
+                                    <i class="fas ${icon}"></i>
+                                    <span>${status}</span>
+                                </span>
+                            </li>`;
+                }).join('');
+
+            listEl.innerHTML = componentListHtml;
+            modal.classList.add('visible');
+        }
+
+
+        // --- SETUP DE EVENT LISTENERS ---
+        function setupEventListeners() {
+            closeTabBtn.addEventListener('click', () => window.close());
+            elements.sourceFilter.addEventListener('change', () => fetchAndDisplayHistory());
+            elements.modelFilter.addEventListener('change', applyFiltersAndRender);
+            elements.clientFilter.addEventListener('change', applyFiltersAndRender);
+            elements.timeAnalysisPeriod.addEventListener('change', () => renderTemporalAnalytics(allRecords));
+            
+            elements.clearFiltersBtn.addEventListener('click', () => {
+                elements.sourceFilter.value = "all";
+                elements.modelFilter.value = "";
+                elements.clientFilter.value = "";
+                datePicker?.clearSelection();
+                elements.searchInput.value = '';
+                fetchAndDisplayHistory();
+            });
+            
+            painelContainer.querySelector('#refresh-analytics').addEventListener('click', () => fetchAndDisplayHistory(true));
+            elements.backToDashboardBtn.addEventListener('click', () => switchTab('dashboard'));
+            elements.historyDetailsCloseBtn.addEventListener('click', () => elements.historyDetailsModal.classList.remove('visible'));
+            painelContainer.querySelector('#backToOverviewBtn').addEventListener('click', () => {
+                switchTab('dashboard');
+            });
+            elements.searchInput.addEventListener('input', applyFiltersAndRender);
+            elements.tabs.forEach(tab => {
+                if (tab.dataset.tab !== 'device-details') {
+                    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+                }
+            });
+
+            document.getElementById('generateReportBtn').addEventListener('click', () => {
+                const reportNameModal = document.getElementById('report-name-modal');
+                reportNameModal.classList.add('visible');
+                document.getElementById('reporterName').focus();
+            });
+
+            document.getElementById('cancel-name-btn').addEventListener('click', () => {
+                document.getElementById('report-name-modal').classList.remove('visible');
+            });
+
+            document.getElementById('confirm-name-btn').addEventListener('click', () => {
+                const reporterNameInput = document.getElementById('reporterName');
+                const userName = "Pedro Kutski";
+                const reporterName = reporterNameInput.value.trim() || (userName ? userName : 'Usuário Anônimo');
+                
+                document.getElementById('report-name-modal').classList.remove('visible');
+                reporterNameInput.value = '';
+                
+                downloadDashboardAsPdf('relatorio_tecnico_qualidade.pdf', reporterName);
+            });
+        }
+        
+        function setupDateFilters() {
+            datePicker = new Litepicker({
+                element: painelContainer.querySelector('#dateRangePicker'),
+                singleMode: false, autoApply: true, plugins: ['ranges'],
+                format: 'DD/MM/YYYY', separator: ' - ', lang: 'pt-BR',
+                buttonText: { previousMonth: `<i class="fas fa-chevron-left"></i>`, nextMonth: `<i class="fas fa-chevron-right"></i>`, reset: 'Limpar', apply: 'Aplicar' },
+                ranges: {
+                    'Últimos 7 dias': [new Date(new Date().setDate(new Date().getDate() - 6)), new Date()],
+                    'Últimos 30 dias': [new Date(new Date().setDate(new Date().getDate() - 29)), new Date()],
+                    'Este Mês': [new Date(new Date().getFullYear(), new Date().getMonth(), 1), new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)],
+                    'Mês Passado': [new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1), new Date(new Date().getFullYear(), new Date().getMonth(), 0)]
+                },
+                setup: (picker) => picker.on('selected', applyFiltersAndRender)
+            });
+        }
+
+        function getDeviceStatus(record) {
+            for(const comp of ALL_COMPONENTS) {
+                if (String(record[comp.id]).startsWith(STATUS_FALHA)) return STATUS_FALHA;
+            }
+            for(const comp of ALL_COMPONENTS) {
+                if (String(record[comp.id]).startsWith(STATUS_OK)) return STATUS_OK;
+            }
+            return STATUS_NA;
+        }
+
+        async function deleteRecord(recordDate) {
+            showLoading();
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'delete', data: recordDate }) });
+                await fetchAndDisplayHistory();
+            } catch (error) {
+                console.error("Erro ao apagar registro:", error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // ====================================================================
+        // GERAÇÃO DE PDF - Versão Técnica
+        // ====================================================================
+        async function downloadDashboardAsPdf(filename, reporterName) {
+            const { jsPDF } = window.jspdf;
+            showLoading();
+            try {
+                const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                const margin = 40;
+                let yPos = 0;
+
+                // --- CABEÇALHO DO DOCUMENTO ---
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(18);
+                pdf.setTextColor(30, 41, 59);
+                pdf.text('Relatório Técnico de Análise', pdfWidth / 2, margin, { align: 'center' });
+                yPos = margin + 20;
+                
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(9);
+                pdf.setTextColor(100, 116, 139);
+                pdf.text(`Emitido por: ${reporterName}`, margin, yPos);
+                pdf.text(`Data de Emissão: ${new Date().toLocaleString('pt-BR')}`, pdfWidth - margin, yPos, { align: 'right' });
+                yPos += 20;
+                pdf.setDrawColor(203, 213, 225);
+                pdf.line(margin, yPos, pdfWidth - margin, yPos);
+                yPos += 25;
+
+                // --- Helper para Títulos de Seção ---
+                const addSectionTitle = (title) => {
+                    if (yPos > pdfHeight - 60) {
+                        console.warn("Conteúdo excede uma página, pode haver cortes.");
+                        return;
+                    }
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setFontSize(12);
+                    pdf.setTextColor(30, 41, 59);
+                    pdf.text(title, margin, yPos);
+                    yPos += 20;
+                };
+
+                // --- 1. Parâmetros da Análise ---
+                addSectionTitle("Parâmetros da Análise");
+                const source = elements.sourceFilter.options[elements.sourceFilter.selectedIndex].text;
+                const model = elements.modelFilter.options[elements.modelFilter.selectedIndex].text;
+                const client = elements.clientFilter.options[elements.clientFilter.selectedIndex].text;
+                const period = document.getElementById('dateRangePicker').value || 'Não especificado';
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(10);
+                pdf.setTextColor(71, 85, 105);
+                pdf.text(`Fonte: ${source} | Modelo: ${model}`, margin, yPos);
+                yPos += 15;
+                pdf.text(`Cliente: ${client} | Período: ${period}`, margin, yPos);
+                yPos += 30;
+
+                // --- 2. Sumário Executivo de Status ---
+                addSectionTitle("Sumário de Status");
+                const overallChart = charts['overallStatusChart'];
+                if (overallChart) {
+                    const [okCount, failCount] = overallChart.data.datasets[0].data;
+                    const total = okCount + failCount;
+                    const okPercent = total > 0 ? ((okCount / total) * 100).toFixed(1) : "0.0";
+                    const failPercent = total > 0 ? ((failCount / total) * 100).toFixed(1) : "0.0";
+                    
+                    pdf.setFillColor(20, 184, 166); // Verde
+                    pdf.rect(margin, yPos, 8, 8, 'F');
+                    pdf.text(`Unidades Conformes: ${okCount} (${okPercent}%)`, margin + 12, yPos + 7);
+
+                    pdf.setFillColor(244, 63, 94); // Vermelho
+                    pdf.rect(margin + 220, yPos, 8, 8, 'F');
+                    pdf.text(`Unidades Não Conformes: ${failCount} (${failPercent}%)`, margin + 232, yPos + 7);
+                    yPos += 30;
+                }
+                
+                pdf.setDrawColor(226, 232, 240);
+                pdf.line(margin, yPos - 10, pdfWidth - margin, yPos - 10);
+
+                // --- Layout de duas colunas ---
+                const col1X = margin;
+                const col2X = pdfWidth / 2 + 15;
+                const colWidth = pdfWidth / 2 - margin - 10;
+                let yPosCol1 = yPos;
+                let yPosCol2 = yPos;
+
+                // --- 3. Distribuição por Modelo (Coluna 1) ---
+                yPos = yPosCol1;
+                pdf.setFont('helvetica', 'bold').setFontSize(11).setTextColor(30, 41, 59);
+                pdf.text("Distribuição por Modelo", col1X, yPos);
+                yPos += 18;
+                
+                const modelChart = charts['testsByModelChart'];
+                if (modelChart && modelChart.data.labels.length > 0) {
+                    const tableData = modelChart.data.labels.map((label, i) => ({
+                        label: label,
+                        value: modelChart.data.datasets[0].data[i]
+                    }));
+                    
+                    pdf.setFont('helvetica', 'bold').setFontSize(9).setTextColor(100, 116, 139);
+                    pdf.text("Modelo", col1X, yPos);
+                    pdf.text("Volume (un.)", col1X + colWidth, yPos, { align: 'right' });
+                    yPos += 5;
+                    pdf.line(col1X, yPos, col1X + colWidth, yPos);
+                    yPos += 12;
+
+                    pdf.setFont('helvetica', 'normal').setFontSize(9).setTextColor(71, 85, 105);
+                    tableData.forEach(item => {
+                        pdf.text(item.label, col1X, yPos);
+                        pdf.text(String(item.value), col1X + colWidth, yPos, { align: 'right' });
+                        yPos += 14;
+                    });
+                } else {
+                     pdf.setFont('helvetica', 'italic').setFontSize(9).text('Nenhum dado disponível.', col1X, yPos);
+                     yPos += 14;
+                }
+                yPosCol1 = yPos + 20; 
+                
+                // --- 4. Distribuição por Cliente (Coluna 1) ---
+                yPos = yPosCol1;
+                pdf.setFont('helvetica', 'bold').setFontSize(11).setTextColor(30, 41, 59);
+                pdf.text("Distribuição por Cliente", col1X, yPos);
+                yPos += 18;
+                
+                const clientChart = charts['testsByClientChart'];
+                if (clientChart && clientChart.data.labels.length > 0) {
+                    const tableData = clientChart.data.labels.map((label, i) => ({
+                        label: label,
+                        value: clientChart.data.datasets[0].data[i]
+                    }));
+                    
+                    pdf.setFont('helvetica', 'bold').setFontSize(9).setTextColor(100, 116, 139);
+                    pdf.text("Cliente", col1X, yPos);
+                    pdf.text("Volume (un.)", col1X + colWidth, yPos, { align: 'right' });
+                    yPos += 5;
+                    pdf.line(col1X, yPos, col1X + colWidth, yPos);
+                    yPos += 12;
+
+                    pdf.setFont('helvetica', 'normal').setFontSize(9).setTextColor(71, 85, 105);
+                    tableData.forEach(item => {
+                        pdf.text(item.label, col1X, yPos, { maxWidth: colWidth - 50 });
+                        pdf.text(String(item.value), col1X + colWidth, yPos, { align: 'right' });
+                        yPos += 14;
+                    });
+                } else {
+                    pdf.setFont('helvetica', 'italic').setFontSize(9).text('Nenhum dado disponível.', col1X, yPos);
+                    yPos += 14;
+                }
+                yPosCol1 = yPos;
+
+
+                // --- 5. Análise de Incidência de Falhas (Coluna 2) ---
+                yPos = yPosCol2;
+                pdf.setFont('helvetica', 'bold').setFontSize(11).setTextColor(30, 41, 59);
+                pdf.text("Incidência de Falhas por Componente", col2X, yPos);
+                yPos += 18;
+                
+                const failuresChart = charts['failuresByComponentChart'];
+                if (failuresChart && failuresChart.data.labels.length > 0) {
+                    const tableData = failuresChart.data.labels.map((label, i) => ({
+                        label: label,
+                        value: failuresChart.data.datasets[0].data[i]
+                    }));
+
+                    pdf.setFont('helvetica', 'bold').setFontSize(9).setTextColor(100, 116, 139);
+                    pdf.text("Componente", col2X, yPos);
+                    pdf.text("Incidências (n)", col2X + colWidth, yPos, { align: 'right' });
+                    yPos += 5;
+                    pdf.line(col2X, yPos, col2X + colWidth, yPos);
+                    yPos += 12;
+
+                    pdf.setFont('helvetica', 'normal').setFontSize(9).setTextColor(71, 85, 105);
+                    tableData.forEach(item => {
+                        pdf.text(item.label, col2X, yPos);
+                        pdf.text(String(item.value), col2X + colWidth, yPos, { align: 'right' });
+                        yPos += 14;
+                    });
+                } else {
+                    pdf.setFont('helvetica', 'italic').setFontSize(9).text('Nenhuma não conformidade registrada.', col2X, yPos);
+                    yPos += 14;
+                }
+                yPosCol2 = yPos;
+                
+
+                // --- RODAPÉ ---
+                const finalY = Math.max(yPosCol1, yPosCol2);
+                pdf.setDrawColor(203, 213, 225);
+                pdf.line(margin, pdfHeight - margin + 10, pdfWidth - margin, pdfHeight - margin + 10);
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(8);
+                pdf.setTextColor(148, 163, 184);
+                pdf.text("Relatório gerado pelo Sistema de Controle Smartly.", pdfWidth / 2, pdfHeight - margin + 25, { align: 'center' });
+
+
+                pdf.save(filename);
+
+            } catch (error) {
+                console.error("Erro ao gerar o PDF:", error);
+                // Substituindo alert por um modal customizado ou log no console
+                console.error("Ocorreu um erro ao gerar o PDF. Verifique o console para mais detalhes.");
+            } finally {
+                hideLoading();
+            }
+        }
+    });
+    </script>
+</body>
+</html>
+';
+        const PHOTO_UPLOAD_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwgQl3HdzGoGLyVPXt4hDFF-Mubif3Ws9ty-GGFTV2SiUq4uaon87FJuBmdGlDbcXFP/exec";
+
+        const componentesConfig = [ { id: 'aht10', label: 'AHT10' }, { id: 'botao_esquerdo', label: 'Botão Esquerdo' }, { id: 'botao_central', label: 'Botão Central' }, { id: 'botao_direito', label: 'Botão Direito' }, { id: 'botao_reset', label: 'Botão Reset' }, { id: 'certificado', label: 'Certificado' }, { id: 'conector_mola', label: 'Conector Mola' }, { id: 'esp32', label: 'ESP32' }, { id: 'display', label: 'Display' }, { id: 'led_azul', label: 'LED Azul' }, { id: 'ledrgb', label: 'LED RGB' }, { id: 'ldr', label: 'LDR' }, { id: 'ntc', label: 'NTC' }, { id: 'relay', label: 'Relay' }, { id: 'tm1637', label: 'TM1637' }, { id: 'watchdog', label: 'Watchdog' }, { id: 'serigrafia', label: 'Serigrafia' } ];
         const STATUS_NA = 'N/A', STATUS_OK = 'OK', STATUS_FALHA = 'FALHA';
         const statusCycle = [STATUS_NA, STATUS_OK, STATUS_FALHA];
         const statusInfo = {
-            [STATUS_NA]: { icon: 'fas fa-minus-circle', class: 'status-na' },
-            [STATUS_OK]: { icon: 'fas fa-check-circle', class: 'status-ok' },
-            [STATUS_FALHA]: { icon: 'fas fa-times-circle', class: 'status-falha' }
+            [STATUS_NA]: { text: "N/A" },
+            [STATUS_OK]: { text: "OK" },
+            [STATUS_FALHA]: { text: "Falha" }
         };
-        const hideMap = { 
-            'HF801': ['aht10', 'botao_central'], 
-            'HF810': ['aht10', 'botao_central'], 
-            'HF900': ['aht10', 'botao_central'], 
-            'HF405': ['aht10', 'ntc', 'botao_central'], 
-            'HF918': ['ntc', 'tm1637'] 
-        };
+        const hideMap = { 'HF801': ['aht10', 'botao_central'], 'HF810': ['aht10', 'botao_central'], 'HF900': ['aht10', 'botao_central'], 'HF405': ['aht10', 'ntc', 'botao_central'], 'HF918': ['ntc', 'tm1637'] };
         let estadoComponentes = {}, componentesParaExibir = [];
-
-        // --- Variáveis Globais da Câmera e Upload ---
-        let cameraStream = null; 
+        let cameraStream = null;
         let filesToUpload = [];
 
-        // --- SELEÇÃO DE ELEMENTOS DOM ---
         const mainLoginScreen = document.getElementById('mainLoginScreen'), mainTesterNameInput = document.getElementById('mainTesterName'), mainLoginBtn = document.getElementById('mainLoginBtn'), loginErrorMessage = document.getElementById('loginErrorMessage');
         const appContent = document.getElementById('app-content'), testerNameText = document.getElementById('testerNameText'), backToMenuBtn = document.getElementById('backToMenuBtn'), logoutBtn = document.getElementById('logoutBtn');
         const form = document.getElementById('dataForm'), modeloSelect = document.getElementById('modelo'), clienteField = document.getElementById('clienteField'), clienteInput = document.getElementById('cliente'), componentesField = document.getElementById('componentesField'), componentsDiv = document.getElementById('components'), enviarBtn = document.getElementById('enviarBtn'), statusDiv = document.getElementById('status');
         const confirmSendModal = document.getElementById('confirmSendModal'), observacaoTextarea = document.getElementById('observacao'), confirmSendBtn = document.getElementById('confirmSend'), cancelSendBtn = document.getElementById('cancelSend');
-        const feedbackModal = document.getElementById('feedbackModal'), feedbackBtn = document.getElementById('feedbackBtn'), feedbackTypeSelect = document.getElementById('feedbackType'), feedbackDescriptionTextarea = document.getElementById('feedbackDescription'), submitFeedbackBtn = document.getElementById('submitFeedbackBtn'), cancelFeedbackBtn = document.getElementById('cancelFeedback'), feedbackStatusDiv = document.getElementById('feedbackStatus');
-
-        // Elementos DOM da Câmera e Upload
         const openCameraButton = document.getElementById('openCameraButton');
         const cameraContainer = document.getElementById('cameraContainer');
         const cameraPreview = document.getElementById('cameraPreview');
         const captureBtn = document.getElementById('captureBtn');
-        const cancelCameraBtn = document.getElementById('cancelCameraBtn'); 
+        const cancelCameraBtn = document.getElementById('cancelCameraBtn');
         const thumbnailsContainer = document.getElementById('thumbnails');
-        const photoLoadingMessageDiv = document.getElementById('photoLoadingMessage'); 
+        const photoLoadingMessageDiv = document.getElementById('photoLoadingMessage');
         const animatedConfirmationDiv = document.getElementById('animatedConfirmation');
-        // testIdDisplay agora está no header ao lado do nome do testador
-        const testIdDisplay = document.getElementById('testIdDisplay'); 
-
-        // Elementos do modal de confirmação de N/A
+        const testIdDisplay = document.getElementById('testIdDisplay');
         const naConfirmationModal = document.getElementById('naConfirmationModal');
         const confirmNaSendBtn = document.getElementById('confirmNaSend');
         const cancelNaSendBtn = document.getElementById('cancelNaSend');
-
-        // Elementos para o bloqueio do cliente
         const lockClientBtn = document.getElementById('lockClientBtn');
         const lockIcon = document.getElementById('lockIcon');
+        const selectModeRecallBtn = document.getElementById('selectModeRecall');
+        const selectModeTesteBtn = document.getElementById('selectModeTeste');
+        const formTitle = document.getElementById('formTitle');
 
-
-        // --- LÓGICA DE PERSISTÊNCIA E INICIALIZAÇÃO ---
         function checkLoginStatus() {
             const savedName = localStorage.getItem('testerName');
             const savedIsClientLocked = localStorage.getItem('isClientLocked');
-            
-            if (savedIsClientLocked === 'true') {
-                isClientLocked = true;
-                lockedClientName = localStorage.getItem('lockedClientName') || '';
-            } else {
-                isClientLocked = false;
-                lockedClientName = '';
-            }
+            const savedMode = localStorage.getItem('currentMode');
+            if (savedIsClientLocked === 'true') { isClientLocked = true; lockedClientName = localStorage.getItem('lockedClientName') || ''; } else { isClientLocked = false; lockedClientName = ''; }
+            if(savedMode) { currentMode = savedMode; }
+            if (savedName) { globalTesterName = savedName; showApp(); } else { showLogin(); }
+        }
+        function showLogin() { mainLoginScreen.classList.remove('hidden-auth'); appContent.classList.add('hidden'); mainTesterNameInput.focus(); mainTesterNameInput.value = ''; }
+        function showApp() { mainLoginScreen.classList.add('hidden-auth'); appContent.classList.remove('hidden'); if (!recallAppInitialized) initRecallApp(); testerNameText.textContent = globalTesterName; currentTestId = null; testIdDisplay.textContent = ''; if (isClientLocked) { clienteInput.value = lockedClientName; lockIcon.className = 'fas fa-lock'; clienteField.classList.remove('hidden'); } else { lockIcon.className = 'fas fa-lock-open'; clienteInput.value = ''; } setMode(currentMode, true); }
+        function handleLogin() { const name = mainTesterNameInput.value.trim(); if (name.length < 3) { loginErrorMessage.textContent = 'Por favor, digite um nome válido.'; mainLoginScreen.querySelector('.login-container').style.animation = 'shake 0.5s'; setTimeout(() => { mainLoginScreen.querySelector('.login-container').style.animation = ''; }, 500); return; } loginErrorMessage.textContent = ''; localStorage.setItem('testerName', name); globalTesterName = name; showApp(); }
+        function handleLogout() { localStorage.removeItem('testerName'); localStorage.removeItem('currentMode'); globalTesterName = ''; isClientLocked = false; lockedClientName = ''; localStorage.removeItem('isClientLocked'); localStorage.removeItem('lockedClientName'); if(recallAppInitialized) { resetForm(); } showLogin(); }
 
-            if (savedName) {
-                globalTesterName = savedName;
-                showApp();
-            } else {
-                showLogin();
-            }
+        function setMode(newMode, fromInit = false) {
+            currentMode = newMode;
+            localStorage.setItem('currentMode', newMode);
+            const isRecall = newMode === 'Recall';
+            appContent.classList.toggle('mode-recall', isRecall);
+            appContent.classList.toggle('mode-teste', !isRecall);
+            selectModeRecallBtn.classList.toggle('active', isRecall);
+            selectModeTesteBtn.classList.toggle('active', !isRecall);
+            if(isRecall) { formTitle.innerHTML = `<i class="fas fa-search-plus"></i> Formulário de Recall`; } else { formTitle.innerHTML = `<i class="fas fa-vial"></i> Formulário de Teste`; }
+            if (!fromInit) { formTitle.style.opacity = '0'; formTitle.style.transform = 'translateY(10px)'; setTimeout(() => { formTitle.style.opacity = '1'; formTitle.style.transform = 'translateY(0)'; }, 50); }
         }
         
-        function showLogin() { 
-            mainLoginScreen.classList.remove('hidden-auth'); 
-            appContent.classList.add('hidden'); 
-            mainTesterNameInput.focus(); 
-            mainTesterNameInput.value = '';
-        }
-        function showApp() { 
-            mainLoginScreen.classList.add('hidden-auth'); 
-            appContent.classList.remove('hidden'); 
-            if (!recallAppInitialized) initRecallApp(); 
-            testerNameText.textContent = globalTesterName; 
-            // Garante que o ID do teste seja limpo ao mostrar o app, ou gere um novo se necessário
-            currentTestId = null; // Limpa o ID antigo ao entrar no app
-            testIdDisplay.textContent = ''; // Garante que não haja ID pré-existente
-            
-            // Define o estado inicial do campo do cliente e do botão de cadeado
-            if (isClientLocked) {
-                clienteInput.value = lockedClientName;
-                lockIcon.className = 'fas fa-lock'; // Define o ícone como cadeado fechado
-                clienteField.classList.remove('hidden'); // Garante que o campo do cliente esteja visível
-            } else {
-                lockIcon.className = 'fas fa-lock-open'; // Define o ícone como cadeado aberto
-                clienteInput.value = ''; // Garante que esteja limpo se não estiver bloqueado
-            }
-        }
-        
-        function handleLogin() {
-            const name = mainTesterNameInput.value.trim();
-            if (name.length < 3) { loginErrorMessage.textContent = 'Por favor, digite um nome válido.'; return; }
-            loginErrorMessage.textContent = '';
-            localStorage.setItem('testerName', name);
-            globalTesterName = name;
-            showApp();
-        }
-
-        function handleLogout() {
-            localStorage.removeItem('testerName');
-            globalTesterName = '';
-            // Ao deslogar, redefinir também o estado do bloqueio do cliente e o nome salvo
-            isClientLocked = false;
-            lockedClientName = '';
-            localStorage.removeItem('isClientLocked');
-            localStorage.removeItem('lockedClientName');
-            if(recallAppInitialized) {
-                resetForm();
-            }
-            showLogin();
-        }
-        
-        // --- LÓGICA DO APP DE REGISTRO ---
         function initRecallApp() {
             if (recallAppInitialized) return;
             recallAppInitialized = true;
-
-            // --- Event Listeners do App ---
-            modeloSelect.addEventListener('change', () => {
-                const modelo = modeloSelect.value;
-                // Apenas limpa o campo cliente se NÃO estiver bloqueado
-                if (!isClientLocked) {
-                    clienteInput.value = ''; 
-                }
-                testIdDisplay.textContent = ''; // Limpa o ID antigo
-                currentTestId = null; // Zera o ID ao mudar o modelo
-                if (modelo) {
-                    clienteField.classList.remove('hidden');
-                    componentesField.classList.remove('hidden');
-                    enviarBtn.classList.remove('hidden');
-                    if (!isClientLocked) { // Apenas foca se precisar de uma nova entrada
-                        clienteInput.focus();
-                    }
-                    generateAndDisplayTestId(); // Gera e exibe o ID quando o modelo é selecionado
-                } else {
-                    // Se nenhum modelo for selecionado, reseta o formulário completamente (o que respeitará o bloqueio do cliente)
-                    resetForm();
-                }
-                clearStatusMessage(statusDiv);
-                gerarComponentesUI(modelo);
-            });
-
-            // O ID será gerado apenas na mudança do modelo, não mais no input do cliente.
-            clienteInput.addEventListener('input', () => {
-                // Não é mais necessário gerar ID aqui, mas pode-se validar a presença do ID
-                if (!currentTestId && modeloSelect.value.trim() && clienteInput.value.trim()) {
-                    generateAndDisplayTestId();
-                } else if (!clienteInput.value.trim() && modeloSelect.value.trim()) {
-                    // Se o nome do cliente for apagado, mas o modelo ainda está selecionado
-                    // podemos manter o ID, ou limpá-lo se a intenção for iniciar um novo teste.
-                    // Por enquanto, vamos mantê-lo, pois já está vinculado ao modelo.
-                }
-            });
-
-            // Listener para o botão de cadeado do cliente
-            lockClientBtn.addEventListener('click', () => {
-                isClientLocked = !isClientLocked;
-                localStorage.setItem('isClientLocked', isClientLocked);
-                if (isClientLocked) {
-                    lockIcon.className = 'fas fa-lock'; // Troca para cadeado fechado
-                    lockedClientName = clienteInput.value.trim(); // Salva o nome atual do cliente
-                    localStorage.setItem('lockedClientName', lockedClientName);
-                    showAnimatedConfirmation('Nome do cliente fixado.', 'success');
-                } else {
-                    lockIcon.className = 'fas fa-lock-open'; // Troca para cadeado aberto
-                    lockedClientName = ''; // Limpa o nome salvo
-                    localStorage.removeItem('lockedClientName');
-                    showAnimatedConfirmation('Nome do cliente não será mais fixado.', 'warning');
-                }
-            });
-
-
-            form.addEventListener('submit', (e) => {
-                e.preventDefault(); clearStatusMessage(statusDiv);
-                if (!modeloSelect.value) { showAnimatedConfirmation('Selecione um modelo.', 'error'); return; }
-                if (!clienteInput.value.trim()) { showAnimatedConfirmation('Informe o nome do cliente.', 'error'); return; }
-                
-                // Garante que o ID foi gerado antes de prosseguir
-                if (!currentTestId) { 
-                    generateAndDisplayTestId(); 
-                    showAnimatedConfirmation('ID do teste gerado. Por favor, tente enviar novamente.', 'warning');
-                    return; // Retorna para que o usuário possa rever
-                }
-
-                const unmarked = componentesParaExibir.find(comp => estadoComponentes[comp.id]?.status === STATUS_NA);
-                if (unmarked) {
-                    // Se houver componentes N/A, mostra o novo modal de confirmação de N/A
-                    naConfirmationModal.classList.add('visible');
-                    // Não prossegue para confirmSendModal ainda, espera a decisão do usuário no naConfirmationModal
-                } else {
-                    // Se não houver componentes N/A, prossegue para o modal de confirmação principal
-                    confirmSendModal.classList.add('visible');
-                }
-            });
-            
-            // Listeners dos Modais
+            selectModeRecallBtn.addEventListener('click', () => setMode('Recall'));
+            selectModeTesteBtn.addEventListener('click', () => setMode('Teste'));
+            modeloSelect.addEventListener('change', () => { const modelo = modeloSelect.value; if (!isClientLocked) { clienteInput.value = ''; } testIdDisplay.textContent = ''; currentTestId = null; if (modelo) { clienteField.classList.remove('hidden'); componentesField.classList.remove('hidden'); enviarBtn.classList.remove('hidden'); if (!isClientLocked) { clienteInput.focus(); } generateAndDisplayTestId(); } else { resetForm(); } clearStatusMessage(statusDiv); gerarComponentesUI(modelo); });
+            clienteInput.addEventListener('input', () => { if (!currentTestId && modeloSelect.value.trim() && clienteInput.value.trim()) { generateAndDisplayTestId(); } });
+            lockClientBtn.addEventListener('click', () => { isClientLocked = !isClientLocked; localStorage.setItem('isClientLocked', isClientLocked); if (isClientLocked) { lockIcon.className = 'fas fa-lock'; lockedClientName = clienteInput.value.trim(); localStorage.setItem('lockedClientName', lockedClientName); showAnimatedConfirmation('Nome do cliente fixado.', 'success'); } else { lockIcon.className = 'fas fa-lock-open'; lockedClientName = ''; localStorage.removeItem('lockedClientName'); showAnimatedConfirmation('Nome do cliente não será mais fixado.', 'warning'); } });
+            form.addEventListener('submit', (e) => { e.preventDefault(); clearStatusMessage(statusDiv); if (!modeloSelect.value) { showAnimatedConfirmation('Selecione um modelo.', 'error'); return; } if (!clienteInput.value.trim()) { showAnimatedConfirmation('Informe o nome do cliente.', 'error'); return; } if (!currentTestId) { generateAndDisplayTestId(); showAnimatedConfirmation('ID do teste gerado. Tente enviar novamente.', 'warning'); return; } const unmarked = componentesParaExibir.find(comp => estadoComponentes[comp.id]?.status === STATUS_NA); if (unmarked) { naConfirmationModal.classList.add('visible'); } else { confirmSendModal.classList.add('visible'); } });
             confirmSendBtn.addEventListener('click', () => { confirmSendModal.classList.remove('visible'); submitData(); });
             cancelSendBtn.addEventListener('click', () => confirmSendModal.classList.remove('visible'));
-            
-            // Listeners para o modal de confirmação de N/A
-            confirmNaSendBtn.addEventListener('click', () => {
-                naConfirmationModal.classList.remove('visible'); // Esconde o modal de N/A
-                confirmSendModal.classList.add('visible');     // Mostra o modal de confirmação principal
-            });
-            cancelNaSendBtn.addEventListener('click', () => {
-                naConfirmationModal.classList.remove('visible'); // Esconde o modal de N/A
-                // O usuário optou por não enviar com N/A, então não faz mais nada.
-            });
-
-            // REFACTOR: Unificação do manuseio de eventos de clique/toque para o feedbackBtn
-            let touchMoved = false; // Flag para detectar arrasto em touch
-            
-            feedbackBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault(); // Evita rolagem e zoom ao tocar
-                touchMoved = false; // Reseta o flag de movimento
-                touchStartTime = new Date().getTime();
-                longPressTimer = setTimeout(() => {
-                    setAllComponentsToOK();
-                    longPressTimer = null; // Limpa o timer pois a ação de long press foi executada
-                }, LONG_PRESS_THRESHOLD);
-            }, { passive: false });
-
-            feedbackBtn.addEventListener('touchmove', () => {
-                touchMoved = true; // Define que houve movimento durante o toque
-            });
-
-            feedbackBtn.addEventListener('touchend', (e) => {
-                e.preventDefault(); // Evita o comportamento padrão do touch
-                clearTimeout(longPressTimer); // Sempre limpa o timer ao levantar o dedo
-                longPressTimer = null; // Garante que o timer seja null
-
-                // Se não houve movimento (um toque puro) E o long press não foi detectado (timer foi limpo antes de disparar)
-                if (!touchMoved && !longPressTimer) { // longPressTimer já é null aqui se o timeout NÃO disparou
-                     feedbackModal.classList.add('visible');
-                }
-            }, { passive: false });
-
-            // Para eventos de mouse (garantir que funcionem em desktop)
-            let mouseDownTime;
-            let mouseLongPressFired = false;
-
-            feedbackBtn.addEventListener('mousedown', (e) => {
-                if (e.button === 0) { // Botão esquerdo do mouse
-                    mouseLongPressFired = false; // Reseta o flag
-                    mouseDownTime = new Date().getTime();
-                    longPressTimer = setTimeout(() => {
-                        setAllComponentsToOK();
-                        mouseLongPressFired = true; // Marca que o long press foi disparado
-                        longPressTimer = null;
-                    }, LONG_PRESS_THRESHOLD);
-                }
-            });
-
-            feedbackBtn.addEventListener('mouseup', () => {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-
-                if (!mouseLongPressFired) { // Se o long press NÃO foi disparado (foi um clique rápido)
-                    feedbackModal.classList.add('visible');
-                }
-            });
-
-            feedbackBtn.addEventListener('mouseleave', () => {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-                mouseLongPressFired = false; // Reseta o flag se o mouse sair do botão
-            });
-
-            // O event listener 'click' padrão é removido ou ignorado para evitar duplicação,
-            // pois 'touchend' e 'mouseup' já tratam o toque/clique rápido.
-
-            cancelFeedbackBtn.addEventListener('click', () => feedbackModal.classList.remove('visible'));
-            submitFeedbackBtn.addEventListener('click', submitFeedback);
-
-            // Listeners da Câmera/Upload
+            confirmNaSendBtn.addEventListener('click', () => { naConfirmationModal.classList.remove('visible'); confirmSendModal.classList.add('visible'); });
+            cancelNaSendBtn.addEventListener('click', () => { naConfirmationModal.classList.remove('visible'); });
             openCameraButton.addEventListener('click', () => openCamera('environment'));
             captureBtn.addEventListener('click', capturePhoto);
             cancelCameraBtn.addEventListener('click', closeCamera);
         }
 
-        /**
-         * Gera um ID único para o teste no formato (Letra + 4 Dígitos) e o exibe.
-         * Note: Esta geração de ID é client-side e não verifica duplicidade em tempo real na planilha.
-         * Para uma garantia de unicidade robusta, seria necessária uma verificação no Google Apps Script antes do envio dos dados.
-         */
-        function generateAndDisplayTestId() {
-            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            const randomLetter = letters.charAt(Math.floor(Math.random() * letters.length));
-            const randomDigits = Math.floor(1000 + Math.random() * 9000); // Gera um número de 4 dígitos
-            currentTestId = `(${randomLetter}${randomDigits})`;
-            testIdDisplay.textContent = currentTestId; // Exibe no elemento testIdDisplay no header
-            console.log("ID do Teste gerado:", currentTestId);
-        }
-
-        /**
-         * Sets the status of all visible components to 'OK'.
-         */
-        function setAllComponentsToOK() {
-            console.log("Long press detectado: Definindo todos os componentes como OK.");
-            document.querySelectorAll('.component').forEach(componentDiv => {
-                const componentId = componentDiv.dataset.componentId;
-                // Only change if the component is actually part of the displayed components
-                if (componentesParaExibir.some(c => c.id === componentId)) {
-                    // Update state
-                    estadoComponentes[componentId].status = STATUS_OK;
-                    estadoComponentes[componentId].obs = ''; // Clear any observations if setting to OK
-
-                    // Update UI
-                    componentDiv.className = `component ${statusInfo[STATUS_OK].class}`;
-                    componentDiv.querySelector('.icon').className = `icon ${statusInfo[STATUS_OK].icon}`;
-                    componentDiv.querySelector('.failure-details').classList.add('hidden'); // Hide details
-                    componentDiv.querySelector('textarea').value = ''; // Clear textarea content
-                }
-            });
-            showAnimatedConfirmation("Todos os componentes marcados como OK!", 'success');
-        }
-
-
+        function generateAndDisplayTestId() { const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; const randomLetter = letters.charAt(Math.floor(Math.random() * letters.length)); const randomDigits = Math.floor(1000 + Math.random() * 9000); currentTestId = `(${randomLetter}${randomDigits})`; testIdDisplay.textContent = currentTestId; }
+        
         function resetForm() {
             let tempClientName = '';
-            if (isClientLocked) {
-                tempClientName = clienteInput.value.trim(); // Salva o nome do cliente antes do reset completo
-            }
-
+            if (isClientLocked) { tempClientName = clienteInput.value.trim(); }
+            
             form.reset();
+            observacaoTextarea.value = ''; // Limpa o campo de observação
+            
+            setMode(localStorage.getItem('currentMode') || 'Recall', true);
             componentsDiv.innerHTML = '';
             clienteField.classList.add('hidden');
             componentesField.classList.add('hidden');
@@ -806,74 +1580,49 @@
             estadoComponentes = {};
             componentesParaExibir = [];
             clearStatusMessage(statusDiv);
-            // Redefine estados relacionados à foto e ID
             filesToUpload = [];
-            updateThumbnails(); // Limpa as miniaturas
-            closeCamera(); // Garante que a câmera esteja desligada
+            updateThumbnails();
+            closeCamera();
             currentTestId = null;
-            testIdDisplay.textContent = ''; // Limpa a exibição do ID no header
-
-            if (isClientLocked) {
-                clienteInput.value = tempClientName; // Restaura o nome do cliente
-                clienteField.classList.remove('hidden'); // Garante que o campo do cliente esteja visível
-            }
+            testIdDisplay.textContent = '';
+            if (isClientLocked) { clienteInput.value = tempClientName; clienteField.classList.remove('hidden'); }
         }
 
-        function showStatusMessage(element, message, type = 'success') {
-            element.textContent = message;
-            element.className = 'text-center my-2 p-2 rounded-md text-sm';
-            if (type === 'success') {
-                element.classList.add('bg-green-100', 'text-green-800');
-            } else {
-                element.classList.add('bg-red-100', 'text-red-800');
-            }
-        }
         function clearStatusMessage(element) { element.textContent = ''; element.className = 'text-center my-2'; }
 
         function gerarComponentesUI(modelo) {
-            componentsDiv.innerHTML = ''; 
+            componentsDiv.innerHTML = '';
             estadoComponentes = {};
             if (!modelo) return;
 
             const hideList = hideMap[modelo] || [];
-            
-            componentesParaExibir = componentesConfig.filter(comp => {
-                if (modelo === 'HF918' && comp.id === 'botao_central') {
-                    return true; 
-                }
-                return !hideList.includes(comp.id);
-            });
+            componentesParaExibir = componentesConfig.filter(comp => ! (modelo === 'HF918' && comp.id === 'botao_central' ? false : hideList.includes(comp.id)) );
 
             componentesParaExibir.forEach(comp => {
                 estadoComponentes[comp.id] = { status: STATUS_NA, obs: '' };
                 const div = document.createElement('div');
-                div.className = `component ${statusInfo[STATUS_NA].class}`;
+                div.className = 'component-card status-na';
                 div.dataset.componentId = comp.id;
                 
                 div.innerHTML = `
-                    <div class="component-header" tabindex="0">
-                        <span class="font-semibold">${comp.label}</span>
-                        <i class="icon ${statusInfo[STATUS_NA].icon}"></i>
+                    <div class="component-header">
+                        <span class="component-label">${comp.label}</span>
+                        <div class="component-status">
+                            <span class="status-dot"></span>
+                            <span class="status-text">${statusInfo[STATUS_NA].text}</span>
+                        </div>
                     </div>
-                    <div class="failure-details hidden mt-2">
-                        <textarea class="w-full p-2 border rounded-md bg-white" placeholder="Detalhe a falha..."></textarea>
+                    <div class="failure-details">
+                        <textarea placeholder="Detalhe a falha..."></textarea>
                     </div>
                 `;
                 
-                div.querySelector('.component-header').addEventListener('click', () => changeStatus(div, comp.id));
-                div.querySelector('.component-header').addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        changeStatus(div, comp.id);
-                    }
-                });
-                
+                div.addEventListener('click', () => changeStatus(div, comp.id));
                 const textarea = div.querySelector('textarea');
+                textarea.addEventListener('click', e => e.stopPropagation());
                 textarea.addEventListener('input', (e) => {
                     estadoComponentes[comp.id].obs = e.target.value;
                 });
-                textarea.addEventListener('click', e => e.stopPropagation());
-                textarea.addEventListener('keypress', e => e.stopPropagation());
                 componentsDiv.appendChild(div);
             });
         }
@@ -884,404 +1633,101 @@
             const newStatus = statusCycle[nextIndex];
             estadoComponentes[componentId].status = newStatus;
 
-            element.className = `component ${statusInfo[newStatus].class}`;
-            element.querySelector('.icon').className = `icon ${statusInfo[newStatus].icon}`;
+            element.className = 'component-card';
+            element.classList.add(`status-${newStatus.toLowerCase().replace('/', '')}`);
+            
+            element.querySelector('.status-text').textContent = statusInfo[newStatus].text;
             
             const detailsDiv = element.querySelector('.failure-details');
-            detailsDiv.classList.toggle('hidden', newStatus !== STATUS_FALHA);
+            detailsDiv.classList.toggle('visible', newStatus === STATUS_FALHA);
+            if(newStatus !== STATUS_FALHA) {
+                element.querySelector('textarea').value = '';
+                estadoComponentes[componentId].obs = '';
+            }
         }
         
         function getTestColor() {
             const statuses = componentesParaExibir.map(c => estadoComponentes[c.id].status);
-            
-            if (statuses.includes(STATUS_FALHA)) {
-                return '#FEE2E2'; // Vermelho (Falha)
-            }
-            if (statuses.every(s => s === STATUS_OK)) {
-                return '#A7F3D0'; // Verde (Tudo OK)
-            }
-             if (statuses.some(s => s === STATUS_OK)) {
-                return '#FDE68A'; // Amarelo (OK e N/A)
-            }
-            return '#F3F4F6'; // Cinza (Neutra, caso só tenha N/A)
+            if (statuses.includes(STATUS_FALHA)) return '#FEE2E2';
+            if (statuses.every(s => s === STATUS_OK)) return '#A7F3D0';
+            if (statuses.some(s => s === STATUS_OK)) return '#FDE68A';
+            return '#F3F4F6';
         }
-
 
         async function submitData() {
             enviarBtn.disabled = true;
             enviarBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
-            
             const testColor = getTestColor();
-            let photoUploadSuccess = true; // Assume sucesso inicialmente
+            let photoUploadSuccess = true;
             let combinedMessage = 'Dados enviados com sucesso!';
             let combinedMessageType = 'success';
 
-            // 1. Enviar fotos primeiro
             if (filesToUpload.length > 0) {
-                console.log("Chamando uploadPhotos() antes de enviar dados do formulário.");
-                const uploadResult = await uploadPhotos(); // Chamar a função de upload e obter o resultado
-                if (!uploadResult) { // Se o upload de fotos falhou
-                    photoUploadSuccess = false;
-                    combinedMessage = 'Dados do formulário enviados, mas houve falha no upload de ALGUMAS fotos.';
-                    combinedMessageType = 'warning'; // Define como aviso, já que os dados podem ter ido
-                } else {
-                    combinedMessage = 'Dados e fotos enviados com sucesso!';
-                }
-            } else {
-                console.log("Nenhuma foto para enviar.");
+                const uploadResult = await uploadPhotos();
+                if (!uploadResult) { photoUploadSuccess = false; combinedMessage = 'Dados enviados, mas falha no upload das fotos.'; combinedMessageType = 'warning'; } 
+                else { combinedMessage = 'Dados e fotos enviados com sucesso!'; }
             }
-
-            // 2. Prepara o payload do formulário principal
-            const payload = {
-                action: 'create',
-                data: new Date().toISOString(),
-                modelo: modeloSelect.value,
-                cliente: clienteInput.value.trim(), // Cliente SEM o ID prefixado na planilha
-                nome_tester: `${globalTesterName} ${currentTestId}`, // Testador COM o ID prefixado na planilha
-                tester_color: testColor,
-                observacao: observacaoTextarea.value.trim(),
-                test_id: currentTestId // Mantém o ID separado se precisar no script da planilha para outros fins
-            };
-
-            componentesConfig.forEach(comp => {
-                if (componentesParaExibir.some(c => c.id === comp.id)) {
-                    const state = estadoComponentes[comp.id];
-                    payload[comp.id] = state.status === STATUS_FALHA && state.obs.trim() ? `${STATUS_FALHA} (${state.obs.trim()})` : state.status;
-                } else {
-                    payload[comp.id] = '-';
-                }
-            });
-
-            // 3. Enviar dados do formulário
-            try {
-                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            }
-            // Use o mesmo immersive id as in the context
-            catch (err) {
-                console.error("Erro no envio de dados do formulário:", err);
-                combinedMessage = 'Erro crítico ao enviar dados do formulário. Verifique sua conexão. (Fotos: ' + (photoUploadSuccess ? 'Sucesso' : 'Falha') + ')';
-                combinedMessageType = 'error';
-            } finally {
-                // Exibe a confirmação animada final com base no resultado combinado
-                showAnimatedConfirmation(combinedMessage, combinedMessageType);
-                enviarBtn.disabled = false;
-                enviarBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Enviar Teste';
-                setTimeout(() => resetForm(), 2000); // Reseta o formulário após 2 segundos
-            }
+            const payload = { action: 'create', registro_tipo: currentMode, data: new Date().toISOString(), modelo: modeloSelect.value, cliente: clienteInput.value.trim(), nome_tester: `${globalTesterName} ${currentTestId}`, tester_color: testColor, observacao: observacaoTextarea.value.trim(), test_id: currentTestId };
+            componentesConfig.forEach(comp => { if (componentesParaExibir.some(c => c.id === comp.id)) { const state = estadoComponentes[comp.id]; payload[comp.id] = state.status === STATUS_FALHA && state.obs.trim() ? `${STATUS_FALHA} (${state.obs.trim()})` : state.status; } else { payload[comp.id] = '-'; } });
+            try { await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) }); }
+            catch (err) { console.error("Erro no envio de dados: ", err); combinedMessage = 'Erro crítico ao enviar dados. Verifique a conexão.'; combinedMessageType = 'error'; } 
+            finally { showAnimatedConfirmation(combinedMessage, combinedMessageType); enviarBtn.disabled = false; enviarBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Enviar Registro'; setTimeout(() => resetForm(), 2000); }
         }
         
-        async function submitFeedback() {
-            const type = feedbackTypeSelect.value;
-            const description = feedbackDescriptionTextarea.value.trim();
-            if (!description) { showAnimatedConfirmation('Por favor, descreva seu feedback.', 'error'); return; }
-
-            submitFeedbackBtn.disabled = true;
-            submitFeedbackBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
-            
-            try {
-                const payload = { action: 'submitFeedback', timestamp: new Date().toISOString(), nome_tester: globalTesterName, tipo: type, descricao: description };
-                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-                showAnimatedConfirmation('Feedback enviado com sucesso!', 'success');
-                setTimeout(() => { feedbackModal.classList.remove('visible'); feedbackDescriptionTextarea.value = ''; clearStatusMessage(feedbackStatusDiv); }, 2000);
-            } catch (error) {
-                showAnimatedConfirmation('Falha ao enviar feedback.', 'error');
-            } finally {
-                submitFeedbackBtn.disabled = false;
-                submitFeedbackBtn.innerHTML = 'Enviar';
-            }
-        }
-
-        // --- Funções da Câmera e Upload ---
-
-        /**
-         * Abre a câmera e inicia a transmissão para o elemento de vídeo.
-         * @param {string} facingMode - 'user' para câmera frontal, 'environment' para câmera traseira.
-         */
         function openCamera(facingMode) {
-            console.log("Tentando abrir a câmera...");
-            const constraints = {
-                video: {
-                    facingMode: facingMode,
-                    width: { ideal: 640 },  // Resolução ideal para captura
-                    height: { ideal: 480 }
-                },
-                audio: false
-            };
-            
-            // Garante que o contêiner da câmera esteja visível
+            const constraints = { video: { facingMode: facingMode, width: { ideal: 640 }, height: { ideal: 480 } }, audio: false };
             cameraContainer.style.display = 'block';
-
-            // Obtém o stream da câmera
-            navigator.mediaDevices.getUserMedia(constraints)
-                .then(function(s) {
-                    cameraStream = s;
-                    cameraPreview.srcObject = cameraStream;
-                    cameraPreview.play();
-                    console.log("Câmera aberta com sucesso e stream iniciado.");
-                })
-                .catch(function(err) {
-                    console.error("Erro ao acessar a câmera: ", err);
-                    let errorMessage = "Não foi possível acessar a câmera.";
-
-                    if (err.name === "NotAllowedError") {
-                        errorMessage += " Permissão negada. Certifique-se de que o navegador e o sistema operacional permitem o acesso à câmera.";
-                    } else if (err.name === "NotFoundError") {
-                        errorMessage += " Nenhuma câmera encontrada ou conectada.";
-                    } else if (err.name === "NotReadableError") {
-                        errorMessage += " A câmera está sendo usada por outro aplicativo ou está indisponível.";
-                    } else if (err.name === "OverconstrainedError") {
-                        errorMessage += " As configurações da câmera solicitadas não são suportadas pelo seu dispositivo.";
-                    } else if (err.name === "AbortError") {
-                        errorMessage += " A operação da câmera foi abortada.";
-                    } else if (err.name === "SecurityError") {
-                        errorMessage += " O acesso à câmera foi bloqueado por questões de segurança (ex: site não é HTTPS).";
-                    } else {
-                        errorMessage += " Erro desconhecido: " + err.message;
-                    }
-                    
-                    showAnimatedConfirmation(errorMessage, 'error');
-                    closeCamera(); // Fecha a câmera se houver erro
-                });
+            navigator.mediaDevices.getUserMedia(constraints).then(s => { cameraStream = s; cameraPreview.srcObject = cameraStream; cameraPreview.play(); }).catch(err => { console.error("Erro ao acessar a câmera: ", err); showAnimatedConfirmation("Não foi possível acessar a câmera.", 'error'); closeCamera(); });
         }
-
-        /**
-         * Para o stream da câmera e esconde o contêiner da câmera.
-         */
-        function closeCamera() {
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(track => track.stop());
-                cameraStream = null;
-            }
-            cameraContainer.style.display = 'none'; // Garante que o contêiner esteja oculto
-            cameraPreview.srcObject = null;
-            console.log("Câmera fechada.");
-        }
-
-        /**
-         * Captura uma foto do stream da câmera e a adiciona à lista de upload.
-         */
-        function capturePhoto() {
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            
-            // Ajusta as proporções para a visualização
-            canvas.width = cameraPreview.videoWidth;
-            canvas.height = cameraPreview.videoHeight;
-            context.drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
-            
-            // Converte para blob e cria um objeto File
-            canvas.toBlob(function(blob) {
-                const fileName = 'foto_' + new Date().getTime() + '.jpg';
-                const file = new File([blob], fileName, {
-                    type: 'image/jpeg',
-                    lastModified: Date.now()
-                });
-                
-                // Adiciona à lista de upload
-                addFileToUpload(file);
-                
-                // Fecha a câmera após a captura
-                closeCamera();
-                showAnimatedConfirmation("Foto capturada com sucesso!", 'success');
-            }, 'image/jpeg', 0.85);  // Qualidade da imagem
-        }
-
-        /**
-         * Adiciona um arquivo à lista de arquivos para upload e atualiza as miniaturas.
-         * @param {File} file - O objeto File a ser adicionado.
-         */
-        function addFileToUpload(file) {
-            filesToUpload.push(file);
-            updateThumbnails();
-            
-            // Remove a classe 'no-photos' se for a primeira adição
-            if (thumbnailsContainer.classList.contains('no-photos')) {
-                thumbnailsContainer.classList.remove('no-photos');
-                thumbnailsContainer.innerHTML = '';
-            }
-            console.log(`Foto "${file.name}" adicionada. Total: ${filesToUpload.length}`);
-        }
-
-        /**
-         * Remove um arquivo da lista de upload pelo índice e atualiza as miniaturas.
-         * @param {number} index - O índice do arquivo a ser removido.
-         */
-        function removeFile(index) {
-            const removedFileName = filesToUpload[index].name;
-            filesToUpload.splice(index, 1);
-            updateThumbnails();
-            
-            // Mostra mensagem se não houver mais fotos
-            if (filesToUpload.length === 0) {
-                thumbnailsContainer.innerHTML = '<span class="no-photos text-slate-500 italic">Nenhuma foto selecionada ainda</span>';
-                thumbnailsContainer.classList.add('no-photos');
-            }
-            console.log(`Foto "${removedFileName}" removida. Restantes: ${filesToUpload.length}`);
-        }
-
-        /**
-         * Atualiza a área de exibição de miniaturas com base no array `filesToUpload`.
-         */
-        function updateThumbnails() {
-            // Limpa as miniaturas existentes, mas preserva a mensagem "no-photos" se aplicável
-            if (!thumbnailsContainer.classList.contains('no-photos')) {
-                thumbnailsContainer.innerHTML = '';
-            } else {
-                thumbnailsContainer.innerHTML = '<span class="no-photos text-slate-500 italic">Nenhuma foto selecionada ainda</span>';
-            }
-            
-            // Cria as miniaturas apenas se houver arquivos
-            if (filesToUpload.length > 0) {
-                thumbnailsContainer.classList.remove('no-photos'); // Remove a classe se tiver fotos
-                thumbnailsContainer.innerHTML = ''; // Limpa antes de adicionar novas miniaturas
-                filesToUpload.forEach((file, index) => {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const thumbnailDiv = document.createElement('div');
-                        thumbnailDiv.className = 'thumbnail';
-                        
-                        thumbnailDiv.innerHTML = `
-                            <img src="${e.target.result}" alt="${file.name}">
-                            <button class="remove-btn" onclick="removeFile(${index})" title="Remover foto">×</button>
-                        `;
-                        
-                        thumbnailsContainer.appendChild(thumbnailDiv);
-                    };
-                    reader.readAsDataURL(file);
-                });
-            }
-        }
-
-        /**
-         * Envia todas as fotos selecionadas para o Google Drive através de um Google Apps Script separado.
-         * Retorna true se todos os uploads foram bem-sucedidos, false caso contrário.
-         */
-        async function uploadPhotos() { 
-            if (filesToUpload.length === 0) {
-                console.log("Nenhuma foto para upload.");
-                return true; // Considera sucesso se não houver fotos para enviar
-            }
-
-            if (!currentTestId) {
-                // Não mostra confirmação animada aqui, pois a principal tratará o caso.
-                console.error("Erro: Um ID de teste não foi gerado para associar as fotos.");
-                return false; // Falha se não há ID para associar as fotos
-            }
-
-            // O nome do cliente é usado no filename, certifique-se de que ele esteja preenchido
-            const clienteNameForFilename = clienteInput.value.trim().replace(/[^a-zA-Z0-9_]/g, ''); 
-            if (!clienteNameForFilename) {
-                // Não mostra confirmação animada aqui, pois a principal tratará o caso.
-                console.error("Erro: Nome do cliente não preenchido para nomear as fotos.");
-                return false;
-            }
-
-            photoLoadingMessageDiv.style.display = 'block'; // Exibe a mensagem de carregamento para as fotos
-            
+        function closeCamera() { if (cameraStream) { cameraStream.getTracks().forEach(track => track.stop()); cameraStream = null; } cameraContainer.style.display = 'none'; cameraPreview.srcObject = null; }
+        function capturePhoto() { const canvas = document.createElement('canvas'); const context = canvas.getContext('2d'); canvas.width = cameraPreview.videoWidth; canvas.height = cameraPreview.videoHeight; context.drawImage(cameraPreview, 0, 0, canvas.width, canvas.height); canvas.toBlob(function(blob) { const fileName = 'foto_' + new Date().getTime() + '.jpg'; const file = new File([blob], fileName, { type: 'image/jpeg', lastModified: Date.now() }); addFileToUpload(file); closeCamera(); showAnimatedConfirmation("Foto capturada!", 'success'); }, 'image/jpeg', 0.85); }
+        function addFileToUpload(file) { filesToUpload.push(file); updateThumbnails(); }
+        window.removeFile = function(index) { filesToUpload.splice(index, 1); updateThumbnails(); }
+        function updateThumbnails() { if (filesToUpload.length === 0) { thumbnailsContainer.innerHTML = '<span class="no-photos text-slate-500 italic">Nenhuma foto selecionada</span>'; return; } thumbnailsContainer.innerHTML = ''; filesToUpload.forEach((file, index) => { const reader = new FileReader(); reader.onload = function(e) { const thumbnailDiv = document.createElement('div'); thumbnailDiv.className = 'thumbnail'; thumbnailDiv.innerHTML = `<img src="${e.target.result}" alt="${file.name}"><button class="remove-btn" onclick="removeFile(${index})" title="Remover foto">×</button>`; thumbnailsContainer.appendChild(thumbnailDiv); }; reader.readAsDataURL(file); }); }
+        
+        async function uploadPhotos() {
+            if (filesToUpload.length === 0) return true;
+            if (!currentTestId) { console.error("Erro: ID de teste não foi gerado."); return false; }
+            const clienteNameForFilename = clienteInput.value.trim().replace(/[^a-zA-Z0-9_]/g, '');
+            if (!clienteNameForFilename) { console.error("Erro: Nome do cliente não preenchido."); return false; }
+            photoLoadingMessageDiv.style.display = 'block';
             let allPhotosUploadedSuccessfully = true;
-            let successfulUploadsCount = 0;
-            let failedUploadsCount = 0;
-
             for (let i = 0; i < filesToUpload.length; i++) {
                 const file = filesToUpload[i];
-                console.log(`Iniciando upload de: ${file.name}`);
-
-                const base64 = await new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result.split(',')[1]);
-                    reader.onerror = () => reject("Erro ao ler arquivo: " + file.name);
-                    reader.readAsDataURL(file);
-                });
-
+                const base64 = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = () => reject("Erro ao ler arquivo."); reader.readAsDataURL(file); });
                 const formData = new FormData();
                 formData.append("filedata", base64);
-                // Pré-fixa o nome do arquivo com o ID do teste E o nome do cliente
-                formData.append("filename", `${currentTestId}_${clienteNameForFilename}_${file.name}`); 
+                formData.append("filename", `${currentTestId}_${clienteNameForFilename}_${file.name}`);
                 formData.append("mimeType", file.type);
-                
-                try {
-                    const response = await fetch(PHOTO_UPLOAD_SCRIPT_URL, {
-                        method: "POST",
-                        body: formData
-                    });
-
-                    const result = response.text(); 
-                    if ((await result).includes("sucesso")) { 
-                        successfulUploadsCount++;
-                        console.log(`Upload de ${file.name} bem-sucedido.`);
-                    } else {
-                        allPhotosUploadedSuccessfully = false;
-                        failedUploadsCount++;
-                        console.error(`Erro ao enviar ${file.name}: ${await result}`); 
-                    }
-                } catch (error) {
-                    allPhotosUploadedSuccessfully = false;
-                    failedUploadsCount++;
-                    console.error(`Erro na requisição de upload de ${file.name}: ${error.message}`);
-                }
+                try { const response = await fetch(PHOTO_UPLOAD_SCRIPT_URL, { method: "POST", body: formData }); const result = await response.text(); if (!result.includes("sucesso")) { allPhotosUploadedSuccessfully = false; console.error(`Erro ao enviar ${file.name}: ${result}`); } } catch (error) { allPhotosUploadedSuccessfully = false; console.error(`Erro na requisição de upload: ${error.message}`); }
             }
-            
-            photoLoadingMessageDiv.style.display = 'none'; // Oculta a mensagem de carregamento
-
-            // A confirmação animada para o upload das fotos não será exibida aqui separadamente.
-            // A mensagem final do formulário principal será agregada.
-            
-            // Limpa após o envio das fotos
+            photoLoadingMessageDiv.style.display = 'none';
             filesToUpload = [];
-            updateThumbnails(); 
-
-            return allPhotosUploadedSuccessfully; // Retorna o status do upload das fotos
+            updateThumbnails();
+            return allPhotosUploadedSuccessfully;
         }
-
-        /**
-         * Mostra uma mensagem de confirmação animada.
-         * @param {string} message - A mensagem a ser exibida.
-         * @param {'success'|'error'|'warning'} type - O tipo da mensagem (determina cor e ícone).
-         */
+        
         function showAnimatedConfirmation(message, type) {
             const iconSpan = animatedConfirmationDiv.querySelector('.icon');
             const messageP = animatedConfirmationDiv.querySelector('.message');
-
-            // Limpa classes anteriores e define o tipo
             animatedConfirmationDiv.classList.remove('success', 'error', 'warning', 'is-animating');
             animatedConfirmationDiv.classList.add(type);
-
-            // Define o ícone e a mensagem
-            if (type === 'success') {
-                iconSpan.innerHTML = '&#10003;'; // Símbolo de verificação
-            } else if (type === 'error') {
-                iconSpan.innerHTML = '&#10007;'; // Símbolo X
-            } else if (type === 'warning') {
-                iconSpan.innerHTML = '&#9888;'; // Símbolo de aviso
-            }
+            if (type === 'success') iconSpan.innerHTML = '&#10003;';
+            else if (type === 'error') iconSpan.innerHTML = '&#10007;';
+            else if (type === 'warning') iconSpan.innerHTML = '&#9888;';
             messageP.textContent = message;
-
-            // Garante que o elemento está visível e opaco antes de adicionar a animação
             animatedConfirmationDiv.style.opacity = 1;
             animatedConfirmationDiv.style.visibility = 'visible';
-            
-            // Adiciona a classe que dispara a animação
             animatedConfirmationDiv.classList.add('is-animating');
-
-            // Oculta o elemento após a duração da animação
-            setTimeout(() => {
-                animatedConfirmationDiv.classList.remove('is-animating'); // Remove a classe de animação
-                animatedConfirmationDiv.style.opacity = 0;
-                animatedConfirmationDiv.style.visibility = 'hidden';
-            }, 3000); // Duração da animação
+            setTimeout(() => { animatedConfirmationDiv.classList.remove('is-animating'); animatedConfirmationDiv.style.opacity = 0; animatedConfirmationDiv.style.visibility = 'hidden'; }, 3000);
         }
         
-        // --- INICIALIZAÇÃO E LISTENERS GLOBAIS ---
         mainLoginBtn.addEventListener('click', handleLogin);
         mainTesterNameInput.addEventListener('keypress', (e) => { if (e.key === "Enter") handleLogin(); });
         logoutBtn.addEventListener('click', handleLogout);
-        
-        backToMenuBtn.addEventListener('click', () => {
-            window.close(); // Fecha a janela/aba atual
-        });
-        
-        checkLoginStatus(); // Ponto de entrada da aplicação
-        updateThumbnails(); // Inicializa a área de miniaturas com a mensagem padrão
+        backToMenuBtn.addEventListener('click', () => { window.close(); });
+        checkLoginStatus();
+        updateThumbnails();
     });
     </script>
 </body>
