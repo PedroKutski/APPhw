@@ -4,23 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Análise - Central de Qualidade</title>
-    <!-- Dependências Externas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Dependências para Gráficos -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <!-- FIX: Updated the datalabels plugin to a more recent stable version to fix the event handler error. -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css"/>
     <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/plugins/ranges.js"></script>
-    <!-- Dependências para Geração de PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
-    <!-- Estilos Embutidos -->
     <style>
         html { scroll-behavior: smooth; }
         body {
@@ -75,14 +72,12 @@
 </head>
 <body class="text-slate-800">
 
-    <!-- CABEÇALHO FIXO -->
     <header class="bg-white/80 backdrop-blur-sm shadow-sm w-full z-20 flex-shrink-0 sticky top-0">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
                 <i class="fas fa-chart-pie text-3xl text-blue-600"></i>
                 <h1 class="text-xl md:text-2xl font-bold text-slate-800 font-poppins">Painel de Análise</h1>
             </div>
-            <!-- Botão "Voltar ao Menu" modificado para fechar a aba -->
             <button id="closeTabBtn" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center gap-2">
                 <i class="fas fa-arrow-left"></i>
                 <span>Voltar ao Menu</span>
@@ -90,24 +85,18 @@
         </div>
     </header>
 
-    <!-- CONTAINER DO PAINEL -->
     <main id="painel-container" class="flex-grow">
         <div id="app-painel" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 text-slate-800">
-            <!-- Navegação por Abas -->
             <nav id="main-tabs" class="flex border-b border-slate-200 mb-8 overflow-x-auto">
                 <button data-tab="dashboard" class="flex-shrink-0 py-3 px-5 font-semibold text-slate-500 border-b-2 border-transparent hover:border-slate-300 hover:text-slate-700 transition-all duration-200 tab-active"><i class="fas fa-chart-pie mr-2"></i>Análise de Qualidade</button>
                 <button data-tab="history" class="flex-shrink-0 py-3 px-5 font-semibold text-slate-500 border-b-2 border-transparent hover:border-slate-300 hover:text-slate-700 transition-all duration-200"><i class="fas fa-history mr-2"></i>Histórico de Testes</button>
                 <button data-tab="time-analysis" class="flex-shrink-0 py-3 px-5 font-semibold text-slate-500 border-b-2 border-transparent hover:border-slate-300 hover:text-slate-700 transition-all duration-200"><i class="fas fa-chart-line mr-2"></i>Análise Temporal</button>
-                <!-- Aba oculta, usada para navegação interna -->
                 <button data-tab="device-details" class="flex-shrink-0 py-3 px-5 font-semibold text-slate-500 border-b-2 border-transparent hover:border-slate-300 hover:text-slate-700 transition-all duration-200 hidden"><i class="fas fa-microchip mr-2"></i>Detalhes</button>
             </nav>
             
-            <!-- Conteúdo das Abas -->
             <div id="painel-main-content">
-                <!-- Aba: Análise de Qualidade -->
                 <div id="dashboard-content">
                     <section id="analytics-overview-section">
-                        <!-- Filtros e Atualização -->
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
                             <div><h2 class="text-2xl font-bold text-slate-800 font-poppins">Visão Geral da Qualidade</h2><p class="text-slate-500 mt-1">Resultados e tendências dos testes registrados.</p></div>
                             <div class="flex items-center gap-2 mt-3 sm:mt-0">
@@ -120,13 +109,20 @@
                                 <h3 class="font-semibold text-slate-800 font-poppins">Filtros de Análise</h3>
                                 <button id="clearFiltersBtn" class="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"><i class="fas fa-eraser mr-1"></i>Limpar Filtros</button>
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <div>
+                                    <label for="sourceFilter" class="block text-sm font-medium text-slate-700 mb-1">Fonte de Dados:</label>
+                                    <select id="sourceFilter" class="w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <option value="all" selected>Todas as Fontes</option>
+                                        <option value="Página1">Página1 (Produção)</option>
+                                        <option value="Página2">Página2 (Testes)</option>
+                                    </select>
+                                </div>
                                 <div><label for="modelFilter" class="block text-sm font-medium text-slate-700 mb-1">Modelo:</label><select id="modelFilter" class="w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></select></div>
                                 <div><label for="clientFilter" class="block text-sm font-medium text-slate-700 mb-1">Cliente:</label><select id="clientFilter" class="w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></select></div>
                                 <div><label for="dateRangePicker" class="block text-sm font-medium text-slate-700 mb-1">Período:</label><input id="dateRangePicker" type="text" class="w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 cursor-pointer" placeholder="Selecione um período"></div>
                             </div>
                         </div>
-                        <!-- Container para os gráficos que serão exportados -->
                         <div id="charts-for-export" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <div id="overallStatusChartContainer" class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm"><h3 class="font-semibold text-slate-800 mb-4 text-center font-poppins">Resumo Geral</h3><div class="chart-container"><canvas id="overallStatusChart"></canvas></div></div>
                             <div id="failuresByComponentChartContainer" class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm"><h3 class="font-semibold text-slate-800 mb-4 font-poppins">Top Falhas por Componente</h3><div class="chart-container" style="max-width: none;"><canvas id="failuresByComponentChart"></canvas></div></div>
@@ -134,13 +130,12 @@
                             <div id="testsByClientChartContainer" class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm"><h3 class="font-semibold text-slate-800 mb-4 font-poppins">Testes por Cliente</h3><p class="text-slate-500 text-sm mb-4">Clique em uma barra para ver a análise detalhada por cliente.</p><div class="chart-container" style="max-width: none; height: 400px;"><canvas id="testsByClientChart"></canvas></div></div>
                         </div>
                     </section>
-                    <!-- Seção de Detalhes do Cliente (inicialmente oculta) -->
                     <section id="client-detail-analytics-section" class="hidden bg-white p-6 sm:p-8 rounded-2xl shadow-sm">
                         <div class="flex flex-col sm:flex-row justify-between items-center mb-2">
                            <h2 id="client-detail-title" class="text-xl font-bold text-slate-800 font-poppins"></h2>
                            <div class="flex items-center gap-2 mt-3 sm:mt-0">
                                 <button id="backToOverviewBtn" class="bg-slate-200 text-slate-800 font-semibold px-4 py-2 rounded-lg hover:bg-slate-300 transition-all"><i class="fas fa-arrow-left mr-2"></i>Voltar</button>
-                           </div>
+                            </div>
                         </div>
                         <p class="text-slate-500 mb-6">Análise detalhada para o cliente selecionado.</p>
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -149,7 +144,6 @@
                         </div>
                     </section>
                 </div>
-                <!-- Aba: Histórico -->
                 <div id="history-content" class="hidden">
                     <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
@@ -174,22 +168,19 @@
                         </div>
                     </div>
                 </div>
-                <!-- Aba: Análise Temporal -->
                 <div id="time-analysis-content" class="hidden">
                     <section class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
                             <div><h2 class="text-2xl font-bold text-slate-800 font-poppins">Análise Temporal de Testes</h2><p class="text-slate-500 mt-1">Visualize a tendência de testes realizados ao longo do tempo.</p></div>
-                               <div class="flex items-center gap-2 mt-4 sm:mt-0">
+                                <div class="flex items-center gap-2 mt-4 sm:mt-0">
                                     <div><label for="timeAnalysisPeriod" class="sr-only">Período</label><select id="timeAnalysisPeriod" class="rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"><option value="7">Últimos 7 Dias</option><option value="30" selected>Últimos 30 Dias</option><option value="90">Últimos 90 Dias</option></select></div>
                                 </div>
                         </div>
-                        <!-- KPIs -->
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
                             <div class="bg-slate-100 p-5 rounded-xl"><h4 class="text-sm font-medium text-slate-500">Total de Testes</h4><p id="kpi-total-tests" class="text-3xl font-bold text-slate-800 mt-1">0</p></div>
                             <div class="bg-green-100 border border-green-200 p-5 rounded-xl"><h4 class="text-sm font-medium text-green-700">Testes OK</h4><p id="kpi-ok-tests" class="text-3xl font-bold text-green-800 mt-1">0</p></div>
                             <div class="bg-red-100 border border-red-200 p-5 rounded-xl"><h4 class="text-sm font-medium text-red-700">Testes com Falha</h4><p id="kpi-failed-tests" class="text-3xl font-bold text-red-800 mt-1">0</p></div>
                         </div>
-                        <!-- Novos Gráficos -->
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <div class="lg:col-span-2 bg-slate-50 p-6 rounded-xl shadow-inner">
                                 <h3 class="font-semibold text-slate-800 mb-4 font-poppins">Volume e Status de Testes por Dia</h3>
@@ -202,12 +193,11 @@
                         </div>
                     </section>
                 </div>
-                <!-- Aba: Detalhes do Dispositivo -->
                 <div id="device-details-content" class="hidden">
                     <section class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
                             <div><h2 id="device-details-title" class="text-2xl font-bold text-slate-800 font-poppins">Detalhes dos Dispositivos</h2><p id="device-details-subtitle" class="text-slate-500 mt-1"></p></div>
-                               <div class="flex items-center gap-2 mt-3 sm:mt-0">
+                                <div class="flex items-center gap-2 mt-3 sm:mt-0">
                                     <button id="backToDashboardBtn" class="bg-slate-200 text-slate-800 font-semibold px-4 py-2 rounded-lg hover:bg-slate-300 transition-all"><i class="fas fa-arrow-left mr-2"></i>Voltar ao Painel</button>
                                 </div>
                         </div>
@@ -217,10 +207,8 @@
                 </div>
             </div>
         </div>
-        <!-- Overlays e Modais -->
         <div id="loading-overlay" class="loading-overlay hidden opacity-0"><div class="spinner"></div></div>
         
-        <!-- Modal de Confirmação para Apagar -->
         <div id="confirm-modal" class="modal">
             <div class="modal-content">
                 <div class="flex justify-center items-center w-12 h-12 rounded-full mx-auto mb-4" id="confirm-icon-container"><i class="fas text-2xl text-white" id="confirm-icon"></i></div>
@@ -238,7 +226,6 @@
             </div>
         </div>
         
-        <!-- Modal para Detalhes do Histórico -->
         <div id="history-details-modal" class="modal">
             <div class="modal-content">
                 <h2 class="text-2xl font-bold text-slate-800 font-poppins mb-2" id="history-details-title"></h2>
@@ -250,7 +237,6 @@
             </div>
         </div>
 
-        <!-- Modal para Nome do Relatório redesenhado -->
         <div id="report-name-modal" class="modal">
             <div class="modal-content">
                 <div class="flex justify-center items-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 mx-auto mb-4">
@@ -275,7 +261,7 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- CONFIGURAÇÃO GLOBAL DO SCRIPT ---
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyE4h4LL3vk8n0m2A0C3p3n6Plz9w9YV0Ip_N8CpBpIk9VRKQmSkIWmzDL05XgdVKmlmw/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxH4MeVSIynwUd4ZHb-dvMYfsf43Jl21iAg0FBSJP8eYDdtcPflyXhyNUvFltEPCdA-NA/exec';
         const DELETE_PASSWORD = 'sm4r7ly';
         const STATUS_NA = 'N/A';
         const STATUS_OK = 'OK';
@@ -296,6 +282,7 @@
         const closeTabBtn = document.getElementById('closeTabBtn');
         const painelContainer = document.getElementById('painel-container');
         const elements = {
+            sourceFilter: painelContainer.querySelector('#sourceFilter'),
             modelFilter: painelContainer.querySelector('#modelFilter'),
             clientFilter: painelContainer.querySelector('#clientFilter'),
             clearFiltersBtn: painelContainer.querySelector('#clearFiltersBtn'),
@@ -317,7 +304,6 @@
                 ok: painelContainer.querySelector('#kpi-ok-tests'),
                 failed: painelContainer.querySelector('#kpi-failed-tests')
             },
-            // Modais
             historyDetailsModal: document.getElementById('history-details-modal'),
             historyDetailsCloseBtn: document.getElementById('history-details-close-btn')
         };
@@ -329,32 +315,49 @@
             Chart.register(ChartDataLabels);
             setupEventListeners();
             setupDateFilters(); 
-            fetchAndDisplayHistory();
+            fetchAndDisplayHistory(); 
         }
 
         // --- FUNÇÕES DE LÓGICA ---
         
-        async function fetchAndDisplayHistory() {
-            showLoading();
+        async function fetchAndDisplayHistory(isRefresh = false) {
+            const refreshButton = document.getElementById('refresh-analytics');
+            const selectedSource = elements.sourceFilter.value;
+            
+            if (!isRefresh) {
+                showLoading();
+            } else {
+                refreshButton.disabled = true;
+                refreshButton.querySelector('i').classList.add('fa-spin');
+            }
             try {
-                const response = await fetch(`${SCRIPT_URL}?v=${new Date().getTime()}`);
-                if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
+                const url = `${SCRIPT_URL}?sheet=${selectedSource}&v=${new Date().getTime()}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`A resposta da rede não foi 'ok': ${response.statusText}`);
                 allRecords = await response.json();
                 allRecords.sort((a, b) => new Date(b.data) - new Date(a.data));
                 
                 populateFilterOptions(allRecords); 
-                if (datePicker && !datePicker.getStartDate()) {
-                    const end = new Date(); 
-                    const start = new Date(); 
-                    start.setDate(end.getDate() - 29); 
-                    datePicker.setDateRange(start, end, true);
+                
+                if (!isRefresh) {
+                    if (datePicker && !datePicker.getStartDate()) {
+                        const end = new Date(); 
+                        const start = new Date(); 
+                        start.setDate(end.getDate() - 29); 
+                        datePicker.setDateRange(start, end, true);
+                    }
                 }
                 applyFiltersAndRender();
             } catch (error) {
                 console.error('Erro ao buscar dados:', error);
                 if (elements.historyTableBody) elements.historyTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-red-500">Falha ao carregar dados: ${error.message}</td></tr>`;
             } finally {
-                hideLoading();
+                if (!isRefresh) {
+                    hideLoading();
+                } else {
+                    refreshButton.disabled = false;
+                    refreshButton.querySelector('i').classList.remove('fa-spin');
+                }
             }
         }
         
@@ -362,8 +365,14 @@
             const models = [...new Set(records.map(r => r.modelo).filter(Boolean))].sort();
             const clients = [...new Set(records.map(r => r.cliente).filter(Boolean))].sort();
             
+            const selectedModel = elements.modelFilter.value;
+            const selectedClient = elements.clientFilter.value;
+
             elements.modelFilter.innerHTML = '<option value="">Todos os Modelos</option>' + models.map(m => `<option value="${m}">${m}</option>`).join('');
             elements.clientFilter.innerHTML = '<option value="">Todos os Clientes</option>' + clients.map(c => `<option value="${c}">${c}</option>`).join('');
+
+            if (models.includes(selectedModel)) elements.modelFilter.value = selectedModel;
+            if (clients.includes(selectedClient)) elements.clientFilter.value = selectedClient;
         }
 
         function applyFiltersAndRender() {
@@ -395,7 +404,7 @@
             switch (currentActiveTab) {
                 case 'dashboard': renderDashboard(filteredRecords); break;
                 case 'history': renderHistoryTable(filteredRecords); break;
-                case 'time-analysis': renderTemporalAnalytics(allRecords); break; 
+                case 'time-analysis': renderTemporalAnalytics(filteredRecords); break; 
             }
         }
         
@@ -737,7 +746,6 @@
             elements.tabs.forEach(tab => tab.classList.toggle('tab-active', tab.dataset.tab === tabName));
             Object.entries(elements.contents).forEach(([name, content]) => content?.classList.toggle('hidden', name !== tabName));
             
-            // Mostra ou esconde o botão de gerar relatório
             document.getElementById('generateReportBtn').style.display = (tabName === 'dashboard') ? 'flex' : 'none';
 
             applyFiltersAndRender();
@@ -832,17 +840,21 @@
         // --- SETUP DE EVENT LISTENERS ---
         function setupEventListeners() {
             closeTabBtn.addEventListener('click', () => window.close());
+            elements.sourceFilter.addEventListener('change', () => fetchAndDisplayHistory());
             elements.modelFilter.addEventListener('change', applyFiltersAndRender);
             elements.clientFilter.addEventListener('change', applyFiltersAndRender);
             elements.timeAnalysisPeriod.addEventListener('change', () => renderTemporalAnalytics(allRecords));
+            
             elements.clearFiltersBtn.addEventListener('click', () => {
+                elements.sourceFilter.value = "all";
                 elements.modelFilter.value = "";
                 elements.clientFilter.value = "";
                 datePicker?.clearSelection();
                 elements.searchInput.value = '';
-                applyFiltersAndRender();
+                fetchAndDisplayHistory();
             });
-            painelContainer.querySelector('#refresh-analytics').addEventListener('click', fetchAndDisplayHistory);
+            
+            painelContainer.querySelector('#refresh-analytics').addEventListener('click', () => fetchAndDisplayHistory(true));
             elements.backToDashboardBtn.addEventListener('click', () => switchTab('dashboard'));
             elements.historyDetailsCloseBtn.addEventListener('click', () => elements.historyDetailsModal.classList.remove('visible'));
             painelContainer.querySelector('#backToOverviewBtn').addEventListener('click', () => {
@@ -855,7 +867,6 @@
                 }
             });
 
-            // --- LISTENERS DOS BOTÕES DE RELATÓRIO ---
             document.getElementById('generateReportBtn').addEventListener('click', () => {
                 const reportNameModal = document.getElementById('report-name-modal');
                 reportNameModal.classList.add('visible');
@@ -961,13 +972,16 @@
 
                 // --- 1. Parâmetros da Análise ---
                 addSectionTitle("Parâmetros da Análise");
+                const source = elements.sourceFilter.options[elements.sourceFilter.selectedIndex].text;
                 const model = elements.modelFilter.options[elements.modelFilter.selectedIndex].text;
                 const client = elements.clientFilter.options[elements.clientFilter.selectedIndex].text;
                 const period = document.getElementById('dateRangePicker').value || 'Não especificado';
                 pdf.setFont('helvetica', 'normal');
                 pdf.setFontSize(10);
                 pdf.setTextColor(71, 85, 105);
-                pdf.text(`Escopo: Modelo: ${model} | Cliente: ${client} | Período: ${period}`, margin, yPos);
+                pdf.text(`Fonte: ${source} | Modelo: ${model}`, margin, yPos);
+                yPos += 15;
+                pdf.text(`Cliente: ${client} | Período: ${period}`, margin, yPos);
                 yPos += 30;
 
                 // --- 2. Sumário Executivo de Status ---
@@ -1039,7 +1053,7 @@
                 
                 const clientChart = charts['testsByClientChart'];
                 if (clientChart && clientChart.data.labels.length > 0) {
-                     const tableData = clientChart.data.labels.map((label, i) => ({
+                    const tableData = clientChart.data.labels.map((label, i) => ({
                         label: label,
                         value: clientChart.data.datasets[0].data[i]
                     }));
@@ -1111,7 +1125,8 @@
 
             } catch (error) {
                 console.error("Erro ao gerar o PDF:", error);
-                alert("Ocorreu um erro ao gerar o PDF. Verifique o console para mais detalhes.");
+                // Substituindo alert por um modal customizado ou log no console
+                console.error("Ocorreu um erro ao gerar o PDF. Verifique o console para mais detalhes.");
             } finally {
                 hideLoading();
             }
