@@ -345,8 +345,10 @@
         let lockedClientName = '';
         let currentMode = 'Recall';
 
+        // URL para envio dos dados principais do formulário
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxH4MeVSIynwUd4ZHb-dvMYfsf43Jl21iAg0FBSJP8eYDdtcPflyXhyNUvFltEPCdA-NA/exec';
-        const PHOTO_UPLOAD_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwgQl3HdzGoGLyVPXt4hDFF-Mubif3Ws9ty-GGFTV2SiUq4uaon87FJuBmdGlDbcXFP/exec";
+        // URL para o script que faz upload de fotos (o que corrigimos)
+        const PHOTO_UPLOAD_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwcOBssJF2hIFwzlEaQrx5QEQDpQ33SF4XZmdInECWSpo4ZJXheQqsC5Hkqyh2pb3c/exec";
 
         const componentesConfig = [ { id: 'aht10', label: 'AHT10' }, { id: 'botao_esquerdo', label: 'Botão Esquerdo' }, { id: 'botao_central', label: 'Botão Central' }, { id: 'botao_direito', label: 'Botão Direito' }, { id: 'botao_reset', label: 'Botão Reset' }, { id: 'certificado', label: 'Certificado' }, { id: 'conector_mola', label: 'Conector Mola' }, { id: 'esp32', label: 'ESP32' }, { id: 'display', label: 'Display' }, { id: 'led_azul', label: 'LED Azul' }, { id: 'ledrgb', label: 'LED RGB' }, { id: 'ldr', label: 'LDR' }, { id: 'ntc', label: 'NTC' }, { id: 'relay', label: 'Relay' }, { id: 'tm1637', label: 'TM1637' }, { id: 'watchdog', label: 'Watchdog' }, { id: 'serigrafia', label: 'Serigrafia' } ];
         const STATUS_NA = 'N/A', STATUS_OK = 'OK', STATUS_FALHA = 'FALHA';
@@ -555,14 +557,39 @@
             if (!clienteNameForFilename) { console.error("Erro: Nome do cliente não preenchido."); return false; }
             photoLoadingMessageDiv.style.display = 'block';
             let allPhotosUploadedSuccessfully = true;
+
             for (let i = 0; i < filesToUpload.length; i++) {
                 const file = filesToUpload[i];
-                const base64 = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = () => reject("Erro ao ler arquivo."); reader.readAsDataURL(file); });
-                const formData = new FormData();
-                formData.append("filedata", base64);
-                formData.append("filename", `${currentTestId}_${clienteNameForFilename}_${file.name}`);
-                formData.append("mimeType", file.type);
-                try { const response = await fetch(PHOTO_UPLOAD_SCRIPT_URL, { method: "POST", body: formData }); const result = await response.text(); if (!result.includes("sucesso")) { allPhotosUploadedSuccessfully = false; console.error(`Erro ao enviar ${file.name}: ${result}`); } } catch (error) { allPhotosUploadedSuccessfully = false; console.error(`Erro na requisição de upload: ${error.message}`); }
+                const base64 = await new Promise((resolve, reject) => { 
+                    const reader = new FileReader(); 
+                    reader.onload = () => resolve(reader.result.split(',')[1]); 
+                    reader.onerror = () => reject("Erro ao ler arquivo."); 
+                    reader.readAsDataURL(file); 
+                });
+                
+                const payload = {
+                    filedata: base64,
+                    filename: `${currentTestId}_${clienteNameForFilename}_${file.name}`,
+                    mimeType: file.type
+                };
+
+                try {
+                    const response = await fetch(PHOTO_UPLOAD_SCRIPT_URL, { 
+                        method: "POST", 
+                        headers: {
+                            'Content-Type': 'text/plain;charset=utf-8',
+                        },
+                        body: JSON.stringify(payload) 
+                    });
+                    const result = await response.text();
+                    if (!result.includes("sucesso")) { 
+                        allPhotosUploadedSuccessfully = false; 
+                        console.error(`Erro ao enviar ${file.name}: ${result}`); 
+                    }
+                } catch (error) { 
+                    allPhotosUploadedSuccessfully = false; 
+                    console.error(`Erro na requisição de upload: ${error.message}`); 
+                }
             }
             photoLoadingMessageDiv.style.display = 'none';
             filesToUpload = [];
