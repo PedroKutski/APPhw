@@ -323,7 +323,7 @@
     <div class="modal" id="naConfirmationModal">
         <div class="modal-content">
             <h2 class="text-xl font-bold font-poppins text-red-500"><i class="fas fa-exclamation-triangle mr-2"></i>Atenção!</h2>
-            <p class="text-slate-600">Você tem certeza que deseja enviar o teste com componentes **não avaliados (N/A)**?</p>
+            <p class="text-slate-600">Você tem certeza que deseja enviar o teste com componentes *não avaliados (N/A)*?</p>
             <div class="flex justify-end gap-4 mt-4">
                 <button type="button" class="bg-slate-200 px-4 py-2 rounded-lg text-slate-700 hover:bg-slate-300 transition-colors" id="cancelNaSend">Cancelar</button>
                 <button type="button" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors" id="confirmNaSend">Enviar Assim Mesmo</button>
@@ -406,7 +406,7 @@
             appContent.classList.toggle('mode-teste', !isRecall);
             selectModeRecallBtn.classList.toggle('active', isRecall);
             selectModeTesteBtn.classList.toggle('active', !isRecall);
-            if(isRecall) { formTitle.innerHTML = `<i class="fas fa-search-plus"></i> Formulário de Recall`; } else { formTitle.innerHTML = `<i class="fas fa-vial"></i> Formulário de Teste`; }
+            if(isRecall) { formTitle.innerHTML = <i class="fas fa-search-plus"></i> Formulário de Recall; } else { formTitle.innerHTML = <i class="fas fa-vial"></i> Formulário de Teste; }
             if (!fromInit) { formTitle.style.opacity = '0'; formTitle.style.transform = 'translateY(10px)'; setTimeout(() => { formTitle.style.opacity = '1'; formTitle.style.transform = 'translateY(0)'; }, 50); }
         }
         
@@ -428,7 +428,7 @@
             cancelCameraBtn.addEventListener('click', closeCamera);
         }
 
-        function generateAndDisplayTestId() { const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; const randomLetter = letters.charAt(Math.floor(Math.random() * letters.length)); const randomDigits = Math.floor(1000 + Math.random() * 9000); currentTestId = `(${randomLetter}${randomDigits})`; testIdDisplay.textContent = currentTestId; }
+        function generateAndDisplayTestId() { const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; const randomLetter = letters.charAt(Math.floor(Math.random() * letters.length)); const randomDigits = Math.floor(1000 + Math.random() * 9000); currentTestId = (${randomLetter}${randomDigits}); testIdDisplay.textContent = currentTestId; }
         
         function resetForm() {
             let tempClientName = '';
@@ -499,7 +499,7 @@
             estadoComponentes[componentId].status = newStatus;
 
             element.className = 'component-card';
-            element.classList.add(`status-${newStatus.toLowerCase().replace('/', '')}`);
+            element.classList.add(status-${newStatus.toLowerCase().replace('/', '')});
             
             element.querySelector('.status-text').textContent = statusInfo[newStatus].text;
             
@@ -532,23 +532,58 @@
                 if (!uploadResult) { photoUploadSuccess = false; combinedMessage = 'Dados enviados, mas falha no upload das fotos.'; combinedMessageType = 'warning'; } 
                 else { combinedMessage = 'Dados e fotos enviados com sucesso!'; }
             }
-            const payload = { action: 'create', registro_tipo: currentMode, data: new Date().toISOString(), modelo: modeloSelect.value, cliente: clienteInput.value.trim(), nome_tester: `${globalTesterName} ${currentTestId}`, tester_color: testColor, observacao: observacaoTextarea.value.trim(), test_id: currentTestId };
-            componentesConfig.forEach(comp => { if (componentesParaExibir.some(c => c.id === comp.id)) { const state = estadoComponentes[comp.id]; payload[comp.id] = state.status === STATUS_FALHA && state.obs.trim() ? `${STATUS_FALHA} (${state.obs.trim()})` : state.status; } else { payload[comp.id] = '-'; } });
+            const payload = { action: 'create', registro_tipo: currentMode, data: new Date().toISOString(), modelo: modeloSelect.value, cliente: clienteInput.value.trim(), nome_tester: ${globalTesterName} ${currentTestId}, tester_color: testColor, observacao: observacaoTextarea.value.trim(), test_id: currentTestId };
+            componentesConfig.forEach(comp => { if (componentesParaExibir.some(c => c.id === comp.id)) { const state = estadoComponentes[comp.id]; payload[comp.id] = state.status === STATUS_FALHA && state.obs.trim() ? ${STATUS_FALHA} (${state.obs.trim()}) : state.status; } else { payload[comp.id] = '-'; } });
             try { await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) }); }
             catch (err) { console.error("Erro no envio de dados: ", err); combinedMessage = 'Erro crítico ao enviar dados. Verifique a conexão.'; combinedMessageType = 'error'; } 
             finally { showAnimatedConfirmation(combinedMessage, combinedMessageType); enviarBtn.disabled = false; enviarBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Enviar Registro'; setTimeout(() => resetForm(), 2000); }
         }
         
+        // *** FUNÇÃO CORRIGIDA ***
+        // Desabilita o botão de confirmação enquanto a câmera está aberta.
         function openCamera(facingMode) {
+            confirmSendBtn.disabled = true;
+            confirmSendBtn.classList.add('cursor-not-allowed', 'opacity-50');
             const constraints = { video: { facingMode: facingMode, width: { ideal: 640 }, height: { ideal: 480 } }, audio: false };
             cameraContainer.style.display = 'block';
             navigator.mediaDevices.getUserMedia(constraints).then(s => { cameraStream = s; cameraPreview.srcObject = cameraStream; cameraPreview.play(); }).catch(err => { console.error("Erro ao acessar a câmera: ", err); showAnimatedConfirmation("Não foi possível acessar a câmera.", 'error'); closeCamera(); });
         }
-        function closeCamera() { if (cameraStream) { cameraStream.getTracks().forEach(track => track.stop()); cameraStream = null; } cameraContainer.style.display = 'none'; cameraPreview.srcObject = null; }
-        function capturePhoto() { const canvas = document.createElement('canvas'); const context = canvas.getContext('2d'); canvas.width = cameraPreview.videoWidth; canvas.height = cameraPreview.videoHeight; context.drawImage(cameraPreview, 0, 0, canvas.width, canvas.height); canvas.toBlob(function(blob) { const fileName = 'foto_' + new Date().getTime() + '.jpg'; const file = new File([blob], fileName, { type: 'image/jpeg', lastModified: Date.now() }); addFileToUpload(file); closeCamera(); showAnimatedConfirmation("Foto capturada!", 'success'); }, 'image/jpeg', 0.85); }
+
+        // *** FUNÇÃO CORRIGIDA ***
+        // Reabilita o botão de confirmação quando a câmera é fechada.
+        function closeCamera() {
+            if (cameraStream) { cameraStream.getTracks().forEach(track => track.stop()); cameraStream = null; }
+            cameraContainer.style.display = 'none';
+            cameraPreview.srcObject = null;
+            confirmSendBtn.disabled = false;
+            confirmSendBtn.classList.remove('cursor-not-allowed', 'opacity-50');
+        }
+
+        // *** FUNÇÃO CORRIGIDA ***
+        // Desabilita o botão de captura durante o processamento da imagem.
+        function capturePhoto() {
+            captureBtn.disabled = true;
+            captureBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Capturando...';
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = cameraPreview.videoWidth;
+            canvas.height = cameraPreview.videoHeight;
+            context.drawImage(cameraPreview, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(function(blob) {
+                const fileName = 'foto_' + new Date().getTime() + '.jpg';
+                const file = new File([blob], fileName, { type: 'image/jpeg', lastModified: Date.now() });
+                addFileToUpload(file);
+                closeCamera(); // Esta chamada irá reabilitar o botão 'confirmSendBtn'
+                showAnimatedConfirmation("Foto capturada!", 'success');
+                // Reseta o botão de captura para o próximo uso
+                captureBtn.disabled = false;
+                captureBtn.innerHTML = 'Tirar Foto';
+            }, 'image/jpeg', 0.85);
+        }
+
         function addFileToUpload(file) { filesToUpload.push(file); updateThumbnails(); }
         window.removeFile = function(index) { filesToUpload.splice(index, 1); updateThumbnails(); }
-        function updateThumbnails() { if (filesToUpload.length === 0) { thumbnailsContainer.innerHTML = '<span class="no-photos text-slate-500 italic">Nenhuma foto selecionada</span>'; return; } thumbnailsContainer.innerHTML = ''; filesToUpload.forEach((file, index) => { const reader = new FileReader(); reader.onload = function(e) { const thumbnailDiv = document.createElement('div'); thumbnailDiv.className = 'thumbnail'; thumbnailDiv.innerHTML = `<img src="${e.target.result}" alt="${file.name}"><button class="remove-btn" onclick="removeFile(${index})" title="Remover foto">×</button>`; thumbnailsContainer.appendChild(thumbnailDiv); }; reader.readAsDataURL(file); }); }
+        function updateThumbnails() { if (filesToUpload.length === 0) { thumbnailsContainer.innerHTML = '<span class="no-photos text-slate-500 italic">Nenhuma foto selecionada</span>'; return; } thumbnailsContainer.innerHTML = ''; filesToUpload.forEach((file, index) => { const reader = new FileReader(); reader.onload = function(e) { const thumbnailDiv = document.createElement('div'); thumbnailDiv.className = 'thumbnail'; thumbnailDiv.innerHTML = <img src="${e.target.result}" alt="${file.name}"><button class="remove-btn" onclick="removeFile(${index})" title="Remover foto">×</button>; thumbnailsContainer.appendChild(thumbnailDiv); }; reader.readAsDataURL(file); }); }
         
         async function uploadPhotos() {
             if (filesToUpload.length === 0) return true;
@@ -575,12 +610,11 @@
 
                 const payload = {
                     filedata: base64,
-                    filename: `${currentTestId}_${clienteNameForFilename}_${file.name}`,
+                    filename: ${currentTestId}_${clienteNameForFilename}_${file.name},
                     mimeType: file.type
                 };
 
                 try {
-                    // *** INÍCIO DA CORREÇÃO ***
                     // Abordagem "dispare e esqueça" para contornar problemas de CORS com o Google Scripts
                     await fetch(PHOTO_UPLOAD_SCRIPT_URL, {
                         method: 'POST',
@@ -594,13 +628,9 @@
                         body: JSON.stringify(payload)
                     });
                     // NOTA: No modo 'no-cors', não podemos verificar a resposta do servidor.
-                    // O bloco 'catch' só pegará erros de rede (ex: sem conexão com a internet),
-                    // não erros do lado do servidor (como falha ao salvar o arquivo).
-                    // Nós assumimos que a operação foi bem-sucedida se nenhum erro de rede ocorrer.
-                    // *** FIM DA CORREÇÃO ***
                 } catch (error) {
                     allPhotosUploadedSuccessfully = false;
-                    console.error(`Erro na requisição de upload para o arquivo ${file.name}: ${error.message}`);
+                    console.error(Erro na requisição de upload para o arquivo ${file.name}: ${error.message});
                 }
             }
             photoLoadingMessageDiv.style.display = 'none';
