@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistema de Etiquetas - Clean</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* --- GLOBAL --- */
+        :root {
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
+        html, body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            background-color: #f1f5f9; /* Fundo levemente cinza na tela */
+            width: 100%;
+            height: 100dvh; 
+            overflow: hidden; 
+            position: fixed;
+            inset: 0;
+        }
+
+        /* --- ÁREAS DE ROLAGEM --- */
+        #scrollContainer, #preview-scroll-area {
+            -webkit-overflow-scrolling: touch;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            height: 100%;
+        }
+
+        .btn-click-effect:active {
+            transform: scale(0.96);
+            background-color: #e2e8f0;
+        }
+
+        /* --- CSS DE IMPRESSÃO --- */
+        @media print {
+            @page { size: A4; margin: 0mm; }
+            html, body {
+                position: static !important;
+                overflow: visible !important;
+                height: auto !important;
+                background: white !important;
+            }
+            header, nav, section#input-section, #toast, .no-print { display: none !important; }
+            section#preview-section {
+                position: static !important;
+                display: block !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+                transform: none !important;
+            }
+            #previewContainer {
+                transform: none !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+            }
+            .sheet { margin: 0 !important; box-shadow: none !important; break-after: page; }
+            .checklist-group, .summary-table { break-inside: avoid; }
+        }
+
+        /* --- FOLHA --- */
+        .sheet {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin: 0 auto 20px auto;
+            position: relative;
+        }
+        .sheet.grid-mode { display: grid; }
+        .sheet.list-mode { display: block; padding: 0; }
+
+        /* --- ETIQUETAS --- */
+        .label-cell {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-left: 12mm; 
+            padding-right: 2mm;
+            overflow: hidden;
+            cursor: pointer; 
+            user-select: none;
+        }
+        @media (hover: hover) {
+            .label-cell:hover:not(.skipped-cell-visual) { background-color: #f8fafc; border: 1px dashed #cbd5e1; }
+        }
+        .skipped-cell-visual {
+            background-color: #fff1f2; /* Vermelho muito claro */
+            border: 1px dashed #fda4af;
+        }
+        .label-line { font-size: 13px; line-height: 1.2; white-space: nowrap; overflow: hidden; color: #000; }
+        .label-key { font-weight: 700; margin-right: 5px; text-transform: capitalize; font-size: 12px; color: #525252; }
+        .label-value { font-weight: 600; font-size: 16px; color: #000; }
+        
+        /* Estilo para a etiqueta de RECALL (opcional, para destaque) */
+        .label-line.recall-line { color: #dc2626; font-weight: 800; } 
+        .label-value.recall-value { color: #dc2626; font-weight: 800; }
+
+        /* --- CSS DA LOGO DO CABEÇALHO PRINCIPAL (PRETO E BRANCO) --- */
+        .header-logo-img {
+            height: 36px;
+            width: auto;
+            object-fit: contain;
+            /* 1. invert(1): Vira preto. 
+               2. grayscale(1): Remove qualquer cor, deixando tudo preto/cinza. */
+            filter: invert(1) grayscale(1); 
+        }
+
+        /* --- RELATÓRIO CLEAN (DESIGN NOVO) --- */
+        .checklist-body { padding: 15mm; color: #000; }
+        
+        /* Cabeçalho Minimalista */
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+        }
+        
+        /* Espaço da Logo do Relatório (PRETO E BRANCO) */
+        .report-logo-img {
+            max-height: 100px;
+            max-width: 300px;
+            object-fit: contain;
+            /* 1. invert(1): Vira preto. 
+               2. grayscale(1): Remove qualquer cor, deixando tudo preto/cinza. */
+            filter: invert(1) grayscale(1); 
+        }
+
+        .report-info { text-align: right; }
+        .report-title { font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.5px; color: #000; margin: 0; line-height: 1; }
+        .report-date { font-size: 11px; color: #525252; font-weight: 500; margin-top: 5px; text-transform: uppercase; }
+
+        /* Grupos */
+        .checklist-group { margin-bottom: 30px; }
+        .checklist-group-header { 
+            font-size: 13px; 
+            font-weight: 800; 
+            color: #000; 
+            text-transform: uppercase; 
+            border-bottom: 1px solid #d4d4d4;
+            padding-bottom: 4px;
+            margin-bottom: 10px; 
+        }
+        
+        .checklist-row { display: flex; align-items: center; padding: 6px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+        .checkbox-square { width: 14px; height: 14px; border: 1px solid #737373; margin-right: 15px; }
+        .qty-col { font-weight: 700; width: 40px; text-align: right; margin-right: 20px; font-size: 13px; color: #000; }
+        .model-col { font-weight: 500; color: #404040; flex: 1; }
+
+        /* Sumário */
+        .summary-section { margin-top: 50px; border-top: 2px solid #000; padding-top: 20px; }
+        .summary-title { font-size: 12px; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; color: #000; }
+        
+        .summary-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .summary-table th { text-align: left; border-bottom: 1px solid #000; padding: 5px 0; font-weight: 700; text-transform: uppercase; font-size: 10px; color: #525252; }
+        .summary-table td { padding: 8px 0; border-bottom: 1px solid #e5e5e5; color: #171717; font-weight: 500; }
+        .summary-total-row td { border-top: 1px solid #000; border-bottom: none; font-weight: 800; font-size: 14px; padding-top: 15px; color: #000; }
+
+        .sheet-badge { position: absolute; top: -25px; left: 0; background: #e5e5e5; color: #525252; font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 4px 4px 0 0; text-transform: uppercase; }
+    </style>
+</head>
+<body class="flex flex-col text-slate-800 w-full h-full" oncontextmenu="return false;">
+
+    <header class="bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center no-print z-30 shadow-sm shrink-0 h-16">
+        <div class="flex items-center gap-3">
+            <img src="https://smartlybrasil.com.br/wp-content/uploads/2022/11/Logo-Smartly-Branco-Menor-01-1.png" alt="Smartly Logo" class="header-logo-img">
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <button onclick="toggleRecallMode()" id="btn-recall-mode" class="w-10 h-10 rounded-full bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all shadow-md active:scale-90" title="Modo Recall Desativado">
+                <i class="fas fa-undo-alt text-lg"></i>
+            </button>
+            
+            <div id="marginControl" class="hidden md:flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 transition-opacity">
+                <i class="fas fa-arrows-up-down text-gray-400 text-[10px]"></i>
+                <input type="range" id="marginTopAdjust" min="0" max="30" value="5" step="0.5" class="w-20 accent-black h-1 cursor-pointer" oninput="updateMargin(this.value)">
+            </div>
+            <button onclick="triggerPrint()" class="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg shadow-md active:scale-95 transition-transform flex items-center gap-2 font-bold text-xs uppercase tracking-wide">
+                <i class="fas fa-print"></i> <span class="hidden sm:inline">Imprimir</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex-1 flex relative overflow-hidden bg-gray-100 w-full h-full">
+        
+        <section id="input-section" class="w-full md:w-[380px] bg-white border-r border-gray-200 flex flex-col z-20 absolute inset-0 md:relative transition-transform duration-300 shadow-xl md:shadow-none h-full">
+            
+            <div class="p-4 pb-0 border-b border-gray-100 shrink-0 bg-white z-10">
+                <div class="flex gap-2 bg-gray-100 p-1 rounded-xl">
+                    <button onclick="switchMode('labels')" id="btn-mode-labels" class="flex-1 py-2.5 rounded-lg font-bold text-[11px] uppercase transition-all flex items-center justify-center gap-2 btn-click-effect bg-white shadow-sm text-black border border-gray-200">
+                        <i class="fas fa-th text-xs"></i> Etiquetas
+                    </button>
+                    <button onclick="switchMode('list')" id="btn-mode-list" class="flex-1 py-2.5 rounded-lg font-bold text-[11px] uppercase transition-all flex items-center justify-center gap-2 btn-click-effect text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-list text-xs"></i> Lista
+                    </button>
+                </div>
+            </div>
+
+            <div id="scrollContainer" class="flex-1 p-4 pb-32">
+                <div class="space-y-3">
+                    <h2 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Entrada de Dados</h2>
+                    
+                    <div class="space-y-3">
+                        <input type="text" id="genClient" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm font-semibold text-black focus:bg-white focus:border-black outline-none transition-all" placeholder="Nome / Cliente">
+                        <input type="text" id="genProject" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm font-semibold text-black focus:bg-white focus:border-black outline-none transition-all" placeholder="Projeto / Código">
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="relative">
+                                <select id="genModel" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs font-bold text-black appearance-none outline-none focus:border-black">
+                                    <option value="HF801">HF801</option>
+                                    <option value="HF801W">HF801W</option>
+                                    <option value="HF810">HF810</option>
+                                    <option value="HF900">HF900</option>
+                                    <option value="HFC405">HFC405</option>
+                                    <option value="HF918">HF918</option>
+                                </select>
+                                <i class="fas fa-chevron-down absolute right-3 top-3.5 text-gray-400 text-[10px] pointer-events-none"></i>
+                            </div>
+                            <div class="relative">
+                                <select id="genColor" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs font-bold text-black appearance-none outline-none focus:border-black">
+                                    <option value="B" selected>BRANCO</option>
+                                    <option value="P">PRETO</option>
+                                </select>
+                                <i class="fas fa-chevron-down absolute right-3 top-3.5 text-gray-400 text-[10px] pointer-events-none"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-1 flex items-center gap-2">
+                        <button onclick="adjustQty(-1)" class="w-10 h-10 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 font-bold text-lg btn-click-effect">-</button>
+                        <input type="number" id="genQty" value="1" min="1" class="flex-1 h-10 text-center bg-white border border-gray-200 rounded-lg text-lg font-bold text-black focus:outline-none" readonly>
+                        <button onclick="adjustQty(1)" class="w-10 h-10 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 font-bold text-lg btn-click-effect">+</button>
+                    </div>
+                    
+                    <button onclick="addToQueue()" class="w-full bg-black hover:bg-gray-800 text-white py-3.5 rounded-lg font-bold text-xs uppercase tracking-wider shadow-lg shadow-gray-300 active:scale-[0.98] transition-transform mt-2">Adicionar</button>
+                </div>
+
+                <div class="pt-6 border-t border-gray-100 pb-8 mt-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase">Itens</span>
+                        <button onclick="clearData()" class="text-[10px] font-bold text-red-500 hover:text-red-600 uppercase px-2 py-1 rounded hover:bg-red-50 transition-colors">Limpar Tudo</button>
+                    </div>
+                    <div id="recentList" class="space-y-2"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="preview-section" class="flex-1 bg-gray-100 flex flex-col absolute md:relative w-full h-full translate-x-full md:translate-x-0 transition-transform duration-300 z-10">
+            
+            <div class="bg-white/80 backdrop-blur border-b border-gray-200 px-4 py-2 flex justify-between items-center sticky top-0 z-20 shadow-sm no-print shrink-0 h-10">
+                <span id="totalInfo" class="text-[10px] font-black text-gray-500 uppercase tracking-wider">0 itens</span>
+                <span id="viewModeLabel" class="md:hidden text-[10px] font-bold text-black bg-gray-100 px-2 py-1 rounded">ETIQUETAS</span>
+                <div id="hintLabel" class="hidden md:block text-[10px] text-gray-400 font-medium">Clique para pular</div>
+            </div>
+
+            <div id="preview-scroll-area" class="flex-1 overflow-y-auto p-4 md:p-8 pb-32 flex justify-center items-start w-full">
+                <div id="previewContainer" class="print-area bg-white transition-transform duration-200 origin-top">
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center pb-[env(safe-area-inset-bottom)] z-40 shadow-[0_-5px_20px_rgba(0,0,0,0.03)] h-16 no-print">
+        <button onclick="switchMobileTab('input')" id="nav-input" class="flex flex-col items-center justify-center w-1/2 h-full text-black active:bg-gray-50 transition-colors">
+            <i class="fas fa-plus-circle text-lg mb-1"></i>
+            <span class="text-[9px] font-black uppercase">Editar</span>
+        </button>
+        <div class="w-px h-6 bg-gray-100"></div>
+        <button onclick="switchMobileTab('preview')" id="nav-preview" class="flex flex-col items-center justify-center w-1/2 h-full text-gray-400 active:bg-gray-50 transition-colors">
+            <i class="fas fa-eye text-lg mb-1"></i>
+            <span class="text-[9px] font-black uppercase">Visualizar</span>
+        </button>
+    </nav>
+
+    <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 bg-black text-white px-6 py-3 rounded-full shadow-xl text-xs font-bold transform -translate-y-32 transition-transform duration-300 z-[60] flex items-center gap-3 no-print">
+        <i class="fas fa-check text-green-400"></i>
+        <span>Adicionado</span>
+    </div>
+
+    <textarea id="dataInput" class="hidden"></textarea>
+
+    <script>
+        /* =================================================================
+           LINK DA LOGO (Smartly Brasil)
+           ================================================================= */
+        const URL_DA_LOGO = "https://smartlybrasil.com.br/wp-content/uploads/2022/11/Logo-Smartly-Branco-Menor-01-1.png"; 
+        /* ================================================================= */
+
+        const MODEL = {
+            cols: 3, rows: 9,
+            width: '63.5mm', height: '31mm',
+            marginTop: '5mm', // MARGEM SUPERIOR AJUSTADA
+            marginLeft: '7.25mm', 
+            gapX: '2.5mm', gapY: '0mm'
+        };
+
+        let currentMode = 'labels';
+        let isRecallMode = false; // NOVO: Estado do modo Recall
+        let pageMasks = { 0: new Set() }; 
+
+        const input = document.getElementById('dataInput');
+        const container = document.getElementById('previewContainer');
+        const recentList = document.getElementById('recentList');
+        const toast = document.getElementById('toast');
+        const inputSection = document.getElementById('input-section');
+        const previewSection = document.getElementById('preview-section');
+        const previewScrollArea = document.getElementById('preview-scroll-area');
+        const navInput = document.getElementById('nav-input');
+        const navPreview = document.getElementById('nav-preview');
+        const marginControl = document.getElementById('marginControl');
+        const hintLabel = document.getElementById('hintLabel');
+        const btnRecall = document.getElementById('btn-recall-mode'); // Novo botão
+
+        // NOVO: Função para alternar o modo Recall
+        function toggleRecallMode() {
+            isRecallMode = !isRecallMode;
+            if (isRecallMode) {
+                btnRecall.classList.remove('bg-gray-100', 'text-gray-400');
+                btnRecall.classList.add('bg-red-500', 'text-white');
+                btnRecall.title = 'Modo RECALL Ativo';
+                showToastCustom('<i class="fas fa-circle text-white/50"></i><span>Modo RECALL Ativo</span>', 'bg-red-600', 'shadow-red-500/50');
+            } else {
+                btnRecall.classList.remove('bg-red-500', 'text-white');
+                btnRecall.classList.add('bg-gray-100', 'text-gray-400');
+                btnRecall.title = 'Modo Recall Desativado';
+                showToastCustom('<i class="fas fa-check text-green-400"></i><span>Modo Normal Ativo</span>', 'bg-black');
+            }
+        }
+        
+        // NOVO: Função de Toast Customizada
+        function showToastCustom(content, bgColorClass, shadowClass = 'shadow-xl') {
+             toast.className = `fixed top-4 left-1/2 -translate-x-1/2 ${bgColorClass} text-white px-6 py-3 rounded-full ${shadowClass} text-xs font-bold transform -translate-y-32 transition-transform duration-300 z-[60] flex items-center gap-3 no-print`;
+             toast.innerHTML = content;
+             toast.classList.remove('-translate-y-32');
+             toast.classList.add('translate-y-0');
+             setTimeout(() => {
+                 toast.classList.remove('translate-y-0');
+                 toast.classList.add('-translate-y-32');
+             }, 2000);
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            const btnLabels = document.getElementById('btn-mode-labels');
+            const btnList = document.getElementById('btn-mode-list');
+            
+            if (mode === 'labels') {
+                btnLabels.className = "flex-1 py-2.5 rounded-lg font-bold text-[11px] uppercase transition-all flex items-center justify-center gap-2 btn-click-effect bg-white shadow-sm text-black border border-gray-200";
+                btnList.className = "flex-1 py-2.5 rounded-lg font-bold text-[11px] uppercase transition-all flex items-center justify-center gap-2 btn-click-effect text-gray-400 hover:text-gray-600";
+                marginControl.classList.remove('opacity-0', 'pointer-events-none');
+                hintLabel.classList.remove('hidden');
+                document.getElementById('viewModeLabel').innerText = "ETIQUETAS";
+            } else {
+                btnList.className = "flex-1 py-2.5 rounded-lg font-bold text-[11px] uppercase transition-all flex items-center justify-center gap-2 btn-click-effect bg-white shadow-sm text-black border border-gray-200";
+                btnLabels.className = "flex-1 py-2.5 rounded-lg font-bold text-[11px] uppercase transition-all flex items-center justify-center gap-2 btn-click-effect text-gray-400 hover:text-gray-600";
+                marginControl.classList.add('opacity-0', 'pointer-events-none');
+                hintLabel.classList.add('hidden');
+                document.getElementById('viewModeLabel').innerText = "LISTA";
+            }
+            render();
+            setTimeout(fitSheetToScreen, 100);
+        }
+
+        function render() {
+            if (currentMode === 'labels') renderLabels();
+            else renderChecklist();
+        }
+
+        function toggleCellSkip(sheetIndex, cellIndex) {
+            const targetPage = sheetIndex;
+            if (!pageMasks[targetPage]) pageMasks[targetPage] = new Set();
+            const mask = pageMasks[targetPage];
+            if (mask.has(cellIndex)) mask.delete(cellIndex);
+            else mask.add(cellIndex);
+            render();
+        }
+
+        function createLabel(text, sheetIndex, cellIndex) {
+            const cell = document.createElement('div');
+            cell.className = 'label-cell';
+            cell.onclick = () => toggleCellSkip(sheetIndex, cellIndex);
+            const parts = text.split(',').map(p => p.trim());
+            const type = parts[0];
+            const name = parts[1] || '';
+            const project = parts[2] || '';
+            const model = parts[3] || '';
+            
+            // Adiciona classe de destaque se for RECALL
+            const nameClass = type === 'RECALL' ? 'label-line recall-line' : 'label-line';
+            const valueClass = type === 'RECALL' ? 'label-value recall-value' : 'label-value';
+
+            cell.innerHTML = `
+                <div class="label-content">
+                    <div class="label-line"><span class="label-key">Tipo:</span><span class="label-value ${valueClass}">${type}</span></div>
+                    <div class="${nameClass}"><span class="label-key">Nome:</span><span class="label-value">${name}</span></div>
+                    <div class="label-line"><span class="label-key">Projeto:</span><span class="label-value">${project}</span></div>
+                    <div class="label-line"><span class="label-key">Modelo:</span><span class="label-value">${model}</span></div>
+                </div>`;
+            return cell;
+        }
+
+        function createSkippedLabel(sheetIndex, cellIndex) {
+            const cell = document.createElement('div');
+            cell.className = 'label-cell skipped-cell-visual';
+            cell.onclick = () => toggleCellSkip(sheetIndex, cellIndex);
+            cell.innerHTML = `<div class="w-full h-full flex items-center justify-center"><i class="fas fa-ban text-red-200 text-2xl no-print"></i></div>`;
+            return cell;
+        }
+
+        function createEmptyLabel(sheetIndex, cellIndex) {
+            const cell = document.createElement('div');
+            cell.className = 'label-cell';
+            cell.onclick = () => toggleCellSkip(sheetIndex, cellIndex);
+            return cell;
+        }
+
+        function createLabelSheet(index) {
+            const sheet = document.createElement('div');
+            sheet.className = 'sheet grid-mode';
+            sheet.style.gridTemplateColumns = `repeat(${MODEL.cols}, 1fr)`;
+            sheet.style.gridTemplateRows = `repeat(${MODEL.rows}, 1fr)`;
+            sheet.style.paddingTop = MODEL.marginTop;
+            sheet.style.paddingLeft = MODEL.marginLeft;
+            sheet.style.paddingRight = MODEL.marginLeft;
+            sheet.style.columnGap = MODEL.gapX;
+            sheet.style.rowGap = MODEL.gapY;
+            
+            const badge = document.createElement('div');
+            badge.className = 'sheet-badge no-print';
+            badge.innerText = `Página ${index + 1}`;
+            sheet.appendChild(badge);
+            return sheet;
+        }
+
+        function renderLabels() {
+            // Linhas agora têm 4 campos: Tipo, Cliente, Projeto, Modelo
+            const lines = input.value.split('\n').filter(line => line.trim() !== '');
+            container.innerHTML = '';
+            container.style.transformOrigin = 'top center';
+            const labelsPerSheet = MODEL.cols * MODEL.rows;
+
+            if (lines.length === 0) {
+                const empty = createLabelSheet(0);
+                const mask = pageMasks[0] || new Set();
+                for(let i=0; i<labelsPerSheet; i++) {
+                    if(mask.has(i)) empty.appendChild(createSkippedLabel(0, i));
+                    else empty.appendChild(createEmptyLabel(0, i));
+                }
+                container.appendChild(empty);
+                document.getElementById('totalInfo').innerText = "0 ETIQUETAS";
+                return;
+            }
+
+            let currentSheet = createLabelSheet(0);
+            let sheetCount = 0; 
+            let cellIndexInSheet = 0; 
+            let lineIndex = 0;
+
+            while (lineIndex < lines.length) {
+                if (cellIndexInSheet >= labelsPerSheet) {
+                    container.appendChild(currentSheet);
+                    sheetCount++;
+                    currentSheet = createLabelSheet(sheetCount);
+                    cellIndexInSheet = 0;
+                }
+                const activeMaskIndex = sheetCount;
+                const activeMask = pageMasks[activeMaskIndex] || new Set();
+                const shouldSkip = activeMask.has(cellIndexInSheet);
+
+                if (shouldSkip) {
+                    currentSheet.appendChild(createSkippedLabel(sheetCount, cellIndexInSheet));
+                    cellIndexInSheet++;
+                    continue; 
+                }
+                const label = createLabel(lines[lineIndex], sheetCount, cellIndexInSheet);
+                const currentRow = Math.floor(cellIndexInSheet / 3) + 1;
+                if (currentRow >= 6) {
+                    label.style.position = 'relative';
+                    label.style.top = '0.3mm';
+                }
+                currentSheet.appendChild(label);
+                lineIndex++;
+                cellIndexInSheet++;
+            }
+            while (cellIndexInSheet < labelsPerSheet) {
+                const activeMaskIndex = sheetCount;
+                const activeMask = pageMasks[activeMaskIndex] || new Set();
+                const shouldSkip = activeMask.has(cellIndexInSheet);
+                if (shouldSkip) {
+                    currentSheet.appendChild(createSkippedLabel(sheetCount, cellIndexInSheet));
+                } else {
+                    const emptyCell = createEmptyLabel(sheetCount, cellIndexInSheet); 
+                    const currentRow = Math.floor(cellIndexInSheet / 3) + 1;
+                    if (currentRow >= 6) {
+                        emptyCell.style.position = 'relative';
+                        emptyCell.style.top = '0.3mm';
+                    }
+                    currentSheet.appendChild(emptyCell);
+                }
+                cellIndexInSheet++;
+            }
+            container.appendChild(currentSheet);
+            document.getElementById('totalInfo').innerText = `${lines.length} ETIQUETAS`;
+            fitSheetToScreen();
+        }
+
+        function renderChecklist() {
+            const lines = input.value.split('\n').filter(line => line.trim() !== '');
+            container.innerHTML = '';
+            container.style.transformOrigin = 'top center';
+
+            if (lines.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'sheet list-mode flex flex-col items-center justify-center';
+                empty.innerHTML = `<div class="text-center opacity-30"><i class="fas fa-clipboard-list text-6xl mb-4 text-gray-300"></i><p class="font-bold text-gray-400">Lista Vazia</p></div>`;
+                container.appendChild(empty);
+                document.getElementById('totalInfo').innerText = "0 ITENS";
+                return;
+            }
+
+            const groups = {};
+            const totalSummary = {};
+            lines.forEach(line => {
+                const parts = line.split(',').map(p => p.trim());
+                // Ajustado para 4 partes: Tipo, Nome, Projeto, Modelo
+                const type = parts[0]; 
+                const nome = parts[1] || 'Diversos';
+                const projeto = parts[2] || '';
+                const modelo = parts[3] || '?';
+                
+                const groupKey = `${nome} ${projeto ? '- ' + projeto : ''}`;
+                
+                // Agrupamento também inclui o tipo (Recall ou Normal)
+                const fullGroupKey = `${groupKey} (${type})`;
+                const displayTitle = type === 'RECALL' ? `(RECALL) ${groupKey}` : groupKey;
+
+                if (!groups[fullGroupKey]) groups[fullGroupKey] = { title: displayTitle, items: {} };
+                if (!groups[fullGroupKey].items[modelo]) groups[fullGroupKey].items[modelo] = 0;
+                groups[fullGroupKey].items[modelo]++;
+                
+                if (!totalSummary[modelo]) totalSummary[modelo] = 0;
+                totalSummary[modelo]++;
+            });
+
+            const sheet = document.createElement('div');
+            sheet.className = 'sheet list-mode';
+            const date = new Date().toLocaleDateString('pt-BR');
+            
+            // LAYOUT CLEAN E MINIMALISTA
+            sheet.innerHTML = `
+                <div class="checklist-body">
+                    <div class="report-header">
+                        <img src="${URL_DA_LOGO}" alt="Logo" class="report-logo-img">
+                        <div class="report-info">
+                            <h1 class="report-title">Conferência</h1>
+                            <div class="report-date">Data: ${date}</div>
+                        </div>
+                    </div>
+
+                    <div id="checklist-groups-container"></div>
+
+                    <div class="summary-section">
+                        <div class="summary-title">Resumo</div>
+                        <table class="summary-table">
+                            <thead>
+                                <tr>
+                                    <th>Modelo</th>
+                                    <th style="width: 60px; text-align: center;">Qtd</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summary-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            
+            const groupsContainer = sheet.querySelector('#checklist-groups-container');
+            const summaryTbody = sheet.querySelector('#summary-tbody');
+
+            for (const key in groups) {
+                const group = groups[key];
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'checklist-group';
+                let html = `<div class="checklist-group-header"><span>${group.title}</span></div>`;
+                for (const model in group.items) {
+                    html += `
+                        <div class="checklist-row">
+                            <div class="checkbox-square"></div>
+                            <div class="qty-col">${group.items[model]}</div>
+                            <div class="model-col">${model}</div>
+                        </div>
+                    `;
+                }
+                groupDiv.innerHTML = html;
+                groupsContainer.appendChild(groupDiv);
+            }
+
+            const sortedModels = Object.keys(totalSummary).sort();
+            let grandTotal = 0;
+            sortedModels.forEach(model => {
+                const qty = totalSummary[model];
+                grandTotal += qty;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${model}</td><td style="text-align: center;">${qty}</td>`;
+                summaryTbody.appendChild(tr);
+            });
+            const totalRow = document.createElement('tr');
+            totalRow.className = 'summary-total-row';
+            totalRow.innerHTML = `<td>TOTAL</td><td style="text-align: center;">${grandTotal}</td>`;
+            summaryTbody.appendChild(totalRow);
+
+            container.appendChild(sheet);
+            document.getElementById('totalInfo').innerText = `${Object.keys(groups).length} GRUPOS`;
+            fitSheetToScreen();
+        }
+
+        function addToQueue() {
+            const client = document.getElementById('genClient').value.trim() || "Cliente";
+            const project = document.getElementById('genProject').value.trim() || "";
+            const model = document.getElementById('genModel').value;
+            const colorCode = document.getElementById('genColor').value; 
+            const qty = parseInt(document.getElementById('genQty').value) || 1;
+            
+            const type = isRecallMode ? "RECALL" : "NORMAL"; // Adiciona o tipo
+            const modelFull = colorCode ? `${model} ${colorCode}` : model;
+            
+            // A nova linha tem 4 campos separados por vírgula: Tipo, Cliente, Projeto, Modelo
+            const lineText = `${type}, ${client}, ${project}, ${modelFull}`; 
+            
+            let currentText = input.value;
+            if (currentText && !currentText.endsWith('\n')) currentText += '\n';
+            for (let i = 0; i < qty; i++) {
+                currentText += lineText + '\n';
+            }
+            input.value = currentText;
+
+            const item = document.createElement('div');
+            item.className = "bg-white p-3 rounded-lg border border-gray-100 flex justify-between items-center shadow-sm animate-[fadeIn_0.3s_ease-out]";
+            item.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="bg-gray-100 text-gray-600 font-bold px-2 py-1 rounded text-[10px]">${qty}x</div>
+                    <div class="text-xs text-gray-700 font-medium">
+                        <div class="font-bold text-black">${client}</div>
+                        <div class="text-[10px] text-gray-400">${type} - ${modelFull}</div>
+                    </div>
+                </div>
+                <i class="fas fa-check text-green-500 text-xs opacity-0 animate-[ping_1s_ease-out]"></i>
+            `;
+            recentList.prepend(item);
+            showToast();
+            render(); 
+            document.getElementById('genQty').value = 1;
+        }
+
+        function adjustQty(amount) {
+            const el = document.getElementById('genQty');
+            let val = parseInt(el.value) || 1;
+            val += amount;
+            if (val < 1) val = 1;
+            el.value = val;
+        }
+
+        function clearData() {
+            if(confirm("Deseja limpar toda a lista?")) {
+                input.value = '';
+                recentList.innerHTML = '';
+                pageMasks = { 0: new Set() };
+                render();
+            }
+        }
+
+        function showToast() {
+            // Reutiliza o showToastCustom para a notificação padrão de adição
+            showToastCustom('<i class="fas fa-check text-green-400"></i><span>Adicionado</span>', 'bg-black');
+        }
+        
+        function switchMobileTab(tab) {
+            document.activeElement.blur(); 
+            if (tab === 'input') {
+                inputSection.classList.remove('-translate-x-full');
+                inputSection.classList.add('translate-x-0');
+                inputSection.style.pointerEvents = 'auto'; 
+                previewSection.classList.add('translate-x-full');
+                previewSection.classList.remove('translate-x-0');
+                previewSection.style.pointerEvents = 'none'; 
+                navInput.classList.replace('text-gray-400', 'text-black');
+                navPreview.classList.replace('text-black', 'text-gray-400');
+            } else {
+                inputSection.classList.add('-translate-x-full');
+                inputSection.classList.remove('translate-x-0');
+                inputSection.style.pointerEvents = 'none';
+                previewSection.classList.remove('translate-x-full');
+                previewSection.classList.add('translate-x-0');
+                previewSection.style.pointerEvents = 'auto'; 
+                navPreview.classList.replace('text-gray-400', 'text-black');
+                navInput.classList.replace('text-black', 'text-gray-400');
+                setTimeout(fitSheetToScreen, 300);
+            }
+        }
+
+        function fitSheetToScreen() {
+            const screenWidth = previewScrollArea.clientWidth;
+            if (screenWidth <= 0) return;
+            const a4WidthPx = 794; 
+            const padding = 32;
+            const available = screenWidth - padding;
+            let scale = available / a4WidthPx;
+            if (scale > 1) scale = 1; 
+            if (scale < 0.1) scale = 0.1;
+            container.style.transform = `scale(${scale})`;
+        }
+
+        function triggerPrint() { window.print(); }
+        function updateMargin(val) { MODEL.marginTop = val + 'mm'; if (currentMode === 'labels') renderLabels(); }
+
+        window.addEventListener('resize', () => { requestAnimationFrame(fitSheetToScreen); });
+        window.onload = () => {
+            render();
+            if (window.innerWidth < 768) switchMobileTab('input');
+        };
+    </script>
+</body>
+</html>
